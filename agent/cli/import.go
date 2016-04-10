@@ -2,6 +2,7 @@ package lib
 
 import (
 	"crypto/md5"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -26,9 +27,18 @@ var (
 	lock lockfile.Lockfile
 )
 
+type kurjunInfo struct {
+	ID struct {
+		// Context  string `json:"context"`
+		// Md5Sum   string `json:"md5Sum"`
+		UniqueID string `json:"uniqueId"`
+	} `json:"id"`
+}
+
 type templ struct {
 	name    string
 	file    string
+	repo    string
 	version string
 	branch  string
 	id      string
@@ -36,31 +46,33 @@ type templ struct {
 }
 
 func templId(t templ, arch string, kurjun *http.Client) string {
-	url := config.Cdn.Kurjun + "/template/info?name=" + t.name + "&type=text"
+	url := config.Cdn.Kurjun + "/template/info?repository=" + t.repo + "&name=" + t.name
 	if t.name == "management" && len(t.branch) != 0 {
-		url = config.Cdn.Kurjun + "/template/info?name=" + t.name + "&version=" + t.version + "-" + t.branch + "&type=text"
+		url = url + "&version=" + t.version + "-" + t.branch
+		// url = config.Cdn.Kurjun + "/template/info?name=" + t.name + "&version=" + t.version + "-" + t.branch
 	} else if t.name == "management" {
-		url = config.Cdn.Kurjun + "/template/info?name=" + t.name + "&version=" + t.version + "&type=text"
+		url = url + "&version=" + t.version
+		// url = config.Cdn.Kurjun + "/template/info?name=" + t.name + "&version=" + t.version
 	}
 	response, err := kurjun.Get(url)
 	log.Debug("Retrieving id, get: " + url)
-
 	if err == nil && response.StatusCode == 204 && t.name == "management" {
 		log.Warn("Cannot get management with specified version, trying without version")
-		response, err = kurjun.Get(config.Cdn.Kurjun + "/template/info?name=" + t.name + "&type=text")
+		response, err = kurjun.Get(config.Cdn.Kurjun + "/template/info?name=" + t.name)
 	}
 	if log.Check(log.WarnLevel, "Getting kurjun response", err) || response.StatusCode != 200 {
 		return ""
 	}
 
-	hash, err := ioutil.ReadAll(response.Body)
+	var resp kurjunInfo
+	data, err := ioutil.ReadAll(response.Body)
 	response.Body.Close()
-	if log.Check(log.WarnLevel, "Reading response body", err) {
+	if log.Check(log.WarnLevel, "Reading json body", err) || log.Check(log.WarnLevel, "Unmarshal payload", json.Unmarshal(data, &resp)) {
 		return ""
 	}
 
-	log.Debug("Template id: " + string(hash))
-	return string(hash)
+	log.Debug("Template id: " + resp.ID.UniqueID)
+	return resp.ID.UniqueID
 }
 
 func md5sum(filePath string) string {
@@ -79,7 +91,7 @@ func md5sum(filePath string) string {
 
 func checkLocal(t templ) bool {
 	var response string
-	files, _ := ioutil.ReadDir(config.Agent.LxcPrefix + "tmpdir")
+	files, _ := ioutil.ReadDir(config.Agent.LxcPrefix + "tmpdir/" + t.repo)
 	for _, f := range files {
 		if t.file == f.Name() {
 			if len(t.hash) == 0 {
@@ -91,7 +103,7 @@ func checkLocal(t templ) bool {
 				}
 				return false
 			}
-			if t.hash == md5sum(config.Agent.LxcPrefix+"tmpdir/"+f.Name()) {
+			if t.hash == md5sum(config.Agent.LxcPrefix+"tmpdir/"+t.repo+"/"+f.Name()) {
 				return true
 			}
 		}
@@ -103,7 +115,11 @@ func download(t templ, kurjun *http.Client) bool {
 	if len(t.id) == 0 {
 		return false
 	}
-	out, err := os.Create(config.Agent.LxcPrefix + "tmpdir/" + t.file)
+	err := os.Mkdir(config.Agent.LxcPrefix+"tmpdir/"+t.repo, 0755)
+	if !os.IsExist(err) {
+		log.Error(err.Error())
+	}
+	out, err := os.Create(config.Agent.LxcPrefix + "tmpdir/" + t.repo + "/" + t.file)
 	log.Check(log.FatalLevel, "Creating file "+t.file, err)
 	defer out.Close()
 	log.Info("Downloading " + t.name)
@@ -116,7 +132,7 @@ func download(t templ, kurjun *http.Client) bool {
 
 	_, err = io.Copy(out, rd)
 	log.Check(log.FatalLevel, "Writing file "+t.file, err)
-	if t.hash == md5sum(config.Agent.LxcPrefix+"tmpdir/"+t.file) {
+	if t.hash == md5sum(config.Agent.LxcPrefix+"tmpdir/"+t.repo+"/"+t.file) {
 		return true
 	}
 	log.Error("Failed to check MD5 after download. Please check your connection and try again.")
@@ -140,7 +156,7 @@ func unlockSubutai() {
 	lock.Unlock()
 }
 
-func LxcImport(name, version, token string) {
+func LxcImport(name, repo, version, token string) {
 	if container.IsContainer(name) && name == "management" && len(token) > 1 {
 		gpg.ExchageAndEncrypt("management", token)
 		return
@@ -160,8 +176,12 @@ func LxcImport(name, version, token string) {
 	var t templ
 
 	t.name = name
+	t.repo = config.Template.Repo
 	t.version = config.Template.Version
 	t.branch = config.Template.Branch
+	if len(repo) != 0 {
+		t.repo = repo
+	}
 	if len(version) != 0 {
 		if strings.Contains(version, "-") {
 			verstr := strings.Split(version, "-")
@@ -182,9 +202,9 @@ func LxcImport(name, version, token string) {
 		}
 	}
 
-	log.Info("Version: " + t.version + ", branch: " + t.branch)
+	log.Info("Repository: " + t.repo + ", version: " + t.version + ", branch: " + t.branch)
 
-	if t.branch == "" || t.name != "management" {
+	if len(t.branch) == 0 || t.name != "management" {
 		t.file = t.name + "-subutai-template_" + t.version + "_" + config.Template.Arch + ".tar.gz"
 	} else {
 		t.file = t.name + "-subutai-template_" + t.version + "-" + t.branch + "_" + config.Template.Arch + ".tar.gz"
@@ -202,12 +222,12 @@ func LxcImport(name, version, token string) {
 
 	log.Info("Unpacking template " + t.name)
 	tgz := extractor.NewTgz()
-	templdir := config.Agent.LxcPrefix + "tmpdir/" + t.name
-	tgz.Extract(config.Agent.LxcPrefix+"tmpdir/"+t.file, templdir)
+	templdir := config.Agent.LxcPrefix + "tmpdir/" + t.repo + "/" + t.name
+	tgz.Extract(config.Agent.LxcPrefix+"tmpdir/"+t.repo+"/"+t.file, templdir)
 	parent := container.GetConfigItem(templdir+"/config", "subutai.parent")
 	if parent != "" && parent != t.name && !container.IsTemplate(parent) {
 		log.Info("Parent template required: " + parent)
-		LxcImport(parent, "", token)
+		LxcImport(parent, t.repo, "", token)
 	}
 
 	log.Info("Installing template " + t.name)

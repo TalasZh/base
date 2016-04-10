@@ -18,7 +18,7 @@ func LxcExport(name, version string) {
 	if len(version) == 0 {
 		version = srcver
 	}
-	dst := config.Agent.LxcPrefix + "tmpdir/" + name +
+	dst := config.Agent.LxcPrefix + "tmpdir/" + config.Template.Repo + "/" + name +
 		"-subutai-template_" + version + "_" + runtime.GOARCH
 
 	if !container.IsTemplate(name) {

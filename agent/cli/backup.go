@@ -61,7 +61,7 @@ func BackupContainer(container string, full, stop bool) {
 	log.Check(log.FatalLevel, "Create dir for snapshots: "+containerSnapshotDir,
 		os.MkdirAll(containerSnapshotDir, 0755))
 
-	tmpBackupDir := backupDir + "tmpdir/" + container + "_" + currentDT + "/"
+	tmpBackupDir := backupDir + "tmpdir/" + config.Template.Repo + "/" + container + "_" + currentDT + "/"
 	log.Check(log.FatalLevel, "Create Backup tmp dir: "+tmpBackupDir,
 		os.MkdirAll(tmpBackupDir, 0755))
 

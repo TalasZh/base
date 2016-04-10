@@ -49,6 +49,7 @@ type cdnConfig struct {
 	Kurjun        string
 }
 type templateConfig struct {
+	Repo    string
 	Branch  string
 	Version string
 	Arch    string
@@ -93,6 +94,7 @@ const defaultConfig = `
 	db = metrics
 
 	[template]
+	repo = subutai
 	version = 4.0.0
 	branch = stable
 	arch = amd64
