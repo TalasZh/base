@@ -50,7 +50,6 @@ public class SystemManagerImpl implements SystemManager
 {
 
     private TemplateManager templateManager;
-    private IdentityManager identityManager;
     private PeerManager peerManager;
     private HubManager hubManager;
     private SystemDataService systemDataService;
@@ -370,12 +369,6 @@ public class SystemManagerImpl implements SystemManager
         return systemDataService.getSystemSettings( peerId );
     }
 
-    @Override
-    public void updateSystemSettings( String peerId )
-    {
-         identityManager.setPeerOwner( identityManager.getActiveUser());
-    }
-
 
     @Override
     public io.subutai.core.systemmanager.api.model.SystemSettings saveSystemSettings( String peerId,
@@ -427,12 +420,6 @@ public class SystemManagerImpl implements SystemManager
     public void setTemplateManager( final TemplateManager templateManager )
     {
         this.templateManager = templateManager;
-    }
-
-
-    public void setIdentityManager( final IdentityManager identityManager )
-    {
-        this.identityManager = identityManager;
     }
 
 

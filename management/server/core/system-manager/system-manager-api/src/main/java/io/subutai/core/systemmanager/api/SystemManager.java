@@ -43,8 +43,6 @@ public interface SystemManager
     io.subutai.core.systemmanager.api.model.SystemSettings getSystemSettings( String peerId );
 
 
-    void updateSystemSettings( String peerId );
-
     io.subutai.core.systemmanager.api.model.SystemSettings saveSystemSettings( String peerId, String peerOwnerId );
 
 

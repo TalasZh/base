@@ -51,7 +51,7 @@ public class RestServiceImpl implements RestService
     @Override
     public Response setSystemSettings()
     {
-        systemManager.updateSystemSettings( null );
+        //systemManager.updateSystemSettings( null );
         return Response.status( Response.Status.OK ).build();
     }
 
