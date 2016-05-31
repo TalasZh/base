@@ -16,6 +16,7 @@ import org.apache.commons.configuration.ConfigurationException;
 import io.subutai.common.command.CommandException;
 import io.subutai.common.command.CommandResult;
 import io.subutai.common.command.RequestBuilder;
+import io.subutai.common.dao.DaoManager;
 import io.subutai.common.peer.HostNotFoundException;
 import io.subutai.common.peer.ResourceHost;
 import io.subutai.common.peer.ResourceHostException;
@@ -24,23 +25,25 @@ import io.subutai.common.settings.SubutaiInfo;
 import io.subutai.common.settings.SystemSettings;
 import io.subutai.core.hubmanager.api.HubManager;
 import io.subutai.core.identity.api.IdentityManager;
-import io.subutai.core.identity.api.model.User;
 import io.subutai.core.kurjun.api.KurjunTransferQuota;
 import io.subutai.core.kurjun.api.TemplateManager;
 import io.subutai.core.peer.api.PeerManager;
 import io.subutai.core.systemmanager.api.SystemManager;
+import io.subutai.core.systemmanager.api.dao.SystemDataService;
 import io.subutai.core.systemmanager.api.pojo.AdvancedSettings;
 import io.subutai.core.systemmanager.api.pojo.KurjunSettings;
 import io.subutai.core.systemmanager.api.pojo.NetworkSettings;
-import io.subutai.core.systemmanager.api.pojo.PeerSettings;
 import io.subutai.core.systemmanager.api.pojo.SystemInfo;
+import io.subutai.core.systemmanager.impl.dao.SystemDataServiceImpl;
+import io.subutai.core.systemmanager.impl.model.SecuritySettingsEntity;
+import io.subutai.core.systemmanager.impl.model.SystemSettingsEntity;
 import io.subutai.core.systemmanager.impl.pojo.AdvancedSettingsPojo;
 import io.subutai.core.systemmanager.impl.pojo.KurjunSettingsPojo;
 import io.subutai.core.systemmanager.impl.pojo.NetworkSettingsPojo;
-import io.subutai.core.systemmanager.impl.pojo.PeerSettingsPojo;
 import io.subutai.core.systemmanager.impl.pojo.SystemInfoPojo;
 import io.subutai.hub.share.dto.SystemConfDto;
 import io.subutai.hub.share.dto.SystemConfigurationType;
+import io.subutai.core.systemmanager.api.model.SecuritySettings;
 
 
 public class SystemManagerImpl implements SystemManager
@@ -50,6 +53,7 @@ public class SystemManagerImpl implements SystemManager
     private IdentityManager identityManager;
     private PeerManager peerManager;
     private HubManager hubManager;
+    private SystemDataService systemDataService;
 
     protected Set<SettingsListener> listeners =
             Collections.newSetFromMap( new ConcurrentHashMap<SettingsListener, Boolean>() );
@@ -105,10 +109,10 @@ public class SystemManagerImpl implements SystemManager
     }
 
 
-    public SystemManagerImpl( final HubManager hubManager )
-
+    public SystemManagerImpl( final HubManager hubManager, DaoManager daoManager )
     {
         this.hubManager = hubManager;
+        systemDataService = new SystemDataServiceImpl(daoManager);
     }
 
 
@@ -176,26 +180,6 @@ public class SystemManagerImpl implements SystemManager
     }
 
 
-    @Override
-    public void setPeerSettings()
-    {
-        identityManager.setPeerOwner( identityManager.getActiveUser() );
-    }
-
-
-    @Override
-    public PeerSettings getPeerSettings()
-    {
-        String peerOwnerId = identityManager.getPeerOwnerId();
-        User user = identityManager.getUserByKeyId( peerOwnerId );
-
-        PeerSettings pojo = new PeerSettingsPojo();
-
-        pojo.setPeerOwnerId( peerOwnerId );
-        pojo.setUserPeerOwnerName( user.getUserName() );
-
-        return pojo;
-    }
 
 
     @Override
@@ -376,6 +360,68 @@ public class SystemManagerImpl implements SystemManager
 
         return pojo;
     }
+
+
+    //****************************************************************
+
+    @Override
+    public io.subutai.core.systemmanager.api.model.SystemSettings getSystemSettings( String peerId )
+    {
+        return systemDataService.getSystemSettings( peerId );
+    }
+
+    @Override
+    public void updateSystemSettings( String peerId )
+    {
+         identityManager.setPeerOwner( identityManager.getActiveUser());
+    }
+
+
+    @Override
+    public io.subutai.core.systemmanager.api.model.SystemSettings saveSystemSettings( String peerId,
+                                                                                        String peerOwnerId )
+    {
+        io.subutai.core.systemmanager.api.model.SystemSettings systemSettings = new SystemSettingsEntity();
+        systemSettings.setPeerId( peerId );
+        systemSettings.setPeerOwnerId( peerOwnerId );
+        systemDataService.saveSystemSettings( systemSettings );
+
+        return systemSettings;
+    }
+
+
+    @Override
+    public void saveSystemSettings( io.subutai.core.systemmanager.api.model.SystemSettings systemSettings )
+    {
+        systemDataService.saveSystemSettings( systemSettings );
+    }
+
+
+    @Override
+    public SecuritySettings getSecuritySettings( String peerId )
+    {
+        return systemDataService.getSecuritySettings ( peerId );
+    }
+
+
+    @Override
+    public SecuritySettings saveSecuritySettings( String peerId, String secretPwd )
+    {
+        SecuritySettings  secSettings = new SecuritySettingsEntity();
+        secSettings.setPeerId( peerId );
+        secSettings.setKeyPassword( secretPwd );
+        systemDataService.saveSecuritySettings( secSettings );
+        return secSettings;
+    }
+
+
+    @Override
+    public void saveSecuritySettings( SecuritySettings securitySettings )
+    {
+        systemDataService.saveSecuritySettings( securitySettings );
+    }
+
+    //****************************************************************
 
 
     public void setTemplateManager( final TemplateManager templateManager )

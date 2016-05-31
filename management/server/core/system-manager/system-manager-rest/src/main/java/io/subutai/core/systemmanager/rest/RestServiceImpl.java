@@ -13,10 +13,10 @@ import io.subutai.common.peer.PeerPolicy;
 import io.subutai.common.util.JsonUtil;
 import io.subutai.core.peer.api.PeerManager;
 import io.subutai.core.systemmanager.api.SystemManager;
+import io.subutai.core.systemmanager.api.model.SystemSettings;
 import io.subutai.core.systemmanager.api.pojo.AdvancedSettings;
 import io.subutai.core.systemmanager.api.pojo.KurjunSettings;
 import io.subutai.core.systemmanager.api.pojo.NetworkSettings;
-import io.subutai.core.systemmanager.api.pojo.PeerSettings;
 import io.subutai.core.systemmanager.api.pojo.SystemInfo;
 
 
@@ -49,20 +49,20 @@ public class RestServiceImpl implements RestService
 
 
     @Override
-    public Response setPeerSettings()
+    public Response setSystemSettings()
     {
-        systemManager.setPeerSettings();
+        systemManager.updateSystemSettings( null );
         return Response.status( Response.Status.OK ).build();
     }
 
 
     @Override
-    public Response getPeerSettings()
+    public Response getSystemSettings()
     {
-        PeerSettings pojo = systemManager.getPeerSettings();
-        String peerSettingsInfo = JsonUtil.GSON.toJson( pojo );
+        SystemSettings set = systemManager.getSystemSettings( null );
+        String systemSettings = JsonUtil.GSON.toJson( set );
 
-        return Response.status( Response.Status.OK ).entity( peerSettingsInfo ).build();
+        return Response.status( Response.Status.OK ).entity( systemSettings ).build();
     }
 
 

@@ -39,11 +39,12 @@
       <artifactId>key-server-api</artifactId>
     </dependency>
 
-    <!-- ********* Peer Manager ************* -->
+
+    <!-- ********* System Manager ************* -->
 
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>peer-manager-api</artifactId>
+      <artifactId>system-manager-api</artifactId>
     </dependency>
 
     <!-- ********* BouncyCastle ********** -->

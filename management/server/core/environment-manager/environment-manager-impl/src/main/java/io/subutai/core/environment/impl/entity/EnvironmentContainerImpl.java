@@ -401,7 +401,9 @@ public class EnvironmentContainerImpl implements EnvironmentContainerHost, Seria
             logger.warn( "Trust chain validation is on..." );
             // TODO call relationManager validation here instead
             EnvironmentManagerImpl envImpl = environmentManager;
-            if ( SystemSettings.getKeyTrustCheckState() )
+
+            // TODO Get Settings from System-Manager
+            //if ( SystemSettings.getKeyTrustCheckState() )
             {
                 IdentityManager identityManager = envImpl.getIdentityManager();
                 RelationManager relationManager = envImpl.getRelationManager();

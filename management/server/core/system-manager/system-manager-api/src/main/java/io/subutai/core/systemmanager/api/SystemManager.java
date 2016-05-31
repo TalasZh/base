@@ -3,10 +3,10 @@ package io.subutai.core.systemmanager.api;
 
 import org.apache.commons.configuration.ConfigurationException;
 
+import io.subutai.core.systemmanager.api.model.SecuritySettings;
 import io.subutai.core.systemmanager.api.pojo.AdvancedSettings;
 import io.subutai.core.systemmanager.api.pojo.KurjunSettings;
 import io.subutai.core.systemmanager.api.pojo.NetworkSettings;
-import io.subutai.core.systemmanager.api.pojo.PeerSettings;
 import io.subutai.core.systemmanager.api.pojo.SystemInfo;
 
 
@@ -20,9 +20,6 @@ public interface SystemManager
 
     SystemInfo getSystemInfo();
 
-    void setPeerSettings();
-
-    PeerSettings getPeerSettings();
 
     void setNetworkSettings( String securePortX1, String securePortX2, String securePortX3, final String publicUrl,
                              final String agentPort, final String publicSecurePort, final String keyServer ) throws ConfigurationException;
@@ -39,5 +36,26 @@ public interface SystemManager
 
     SystemInfo getManagementUpdates();
 
+
     boolean updateManagement();
+
+
+    io.subutai.core.systemmanager.api.model.SystemSettings getSystemSettings( String peerId );
+
+
+    void updateSystemSettings( String peerId );
+
+    io.subutai.core.systemmanager.api.model.SystemSettings saveSystemSettings( String peerId, String peerOwnerId );
+
+
+    void saveSystemSettings( io.subutai.core.systemmanager.api.model.SystemSettings systemSettings );
+
+
+    SecuritySettings getSecuritySettings( String peerId );
+
+
+    SecuritySettings saveSecuritySettings( String peerId, String secretPwd );
+
+
+    void saveSecuritySettings( SecuritySettings securitySettings );
 }

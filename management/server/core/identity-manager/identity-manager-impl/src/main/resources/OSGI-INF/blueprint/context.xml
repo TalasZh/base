@@ -19,6 +19,9 @@
   <reference id="securityManager" availability="mandatory"
              interface="io.subutai.core.security.api.SecurityManager" />
 
+  <reference id="systemManager" availability="mandatory"
+             interface="io.subutai.core.systemmanager.api.SystemManager" />
+
   <!--*****************************************************************-->
   <bean id="daoManagerIdenity" init-method="init" activation="eager" scope="singleton"
         class="io.subutai.common.dao.DaoManager">
@@ -31,6 +34,7 @@
         class="io.subutai.core.identity.impl.IdentityManagerImpl">
     <property name="daoManager" ref="daoManagerIdenity" />
     <property name="securityManager" ref="securityManager" />
+    <property name="systemManager" ref="systemManager" />
   </bean>
 
   <!--*****************************************************************-->

@@ -1,25 +1,23 @@
 package io.subutai.core.security.impl;
 
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.UUID;
-
-import javax.jms.IllegalStateException;
 
 import org.bouncycastle.openpgp.PGPException;
 import org.bouncycastle.openpgp.PGPPublicKey;
+import org.bouncycastle.openpgp.PGPPublicKeyRing;
+import org.bouncycastle.openpgp.PGPSecretKeyRing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Strings;
-
 import io.subutai.common.command.EncryptedRequestWrapper;
 import io.subutai.common.command.EncryptedResponseWrapper;
 import io.subutai.common.dao.DaoManager;
 import io.subutai.common.security.crypto.pgp.ContentAndSignatures;
-import io.subutai.common.settings.Common;
+import io.subutai.common.security.crypto.pgp.KeyPair;
+import io.subutai.common.security.crypto.pgp.PGPEncryptionUtil;
+import io.subutai.common.security.crypto.pgp.PGPKeyUtil;
+import io.subutai.common.security.objects.SecurityKeyType;
+import io.subutai.common.util.DateUtil;
 import io.subutai.common.util.JsonUtil;
 import io.subutai.core.keyserver.api.KeyServer;
 import io.subutai.core.security.api.SecurityManager;
@@ -35,7 +33,9 @@ import io.subutai.core.security.impl.crypto.KeyManagerImpl;
 import io.subutai.core.security.impl.crypto.KeyStoreManagerImpl;
 import io.subutai.core.security.impl.dao.SecurityDataServiceImpl;
 import io.subutai.core.security.impl.jetty.HttpContextManagerImpl;
-import io.subutai.core.security.impl.model.SecurityKeyData;
+import io.subutai.core.systemmanager.api.SystemManager;
+import io.subutai.core.systemmanager.api.model.SecuritySettings;
+import io.subutai.core.systemmanager.api.model.SystemSettings;
 
 
 /**
@@ -45,52 +45,25 @@ public class SecurityManagerImpl implements SecurityManager
 {
     private static final Logger LOG = LoggerFactory.getLogger( SecurityManagerImpl.class );
 
-    private static final String PEER_SECRET_KEY_PWD_FILE =
-            String.format( "%s/%s", Common.SUBUTAI_APP_DATA_PATH, "peer.pwd" );
-
     private KeyManager keyManager = null;
     private DaoManager daoManager = null;
     private EncryptionTool encryptionTool = null;
     private SecurityDataService securityDataService = null;
     private KeyServer keyServer = null;
-    private SecurityKeyData keyData = null;
     private KeyStoreManager keyStoreManager = null;
     private CertificateManager certificateManager = null;
     private HttpContextManager httpContextManager;
+    private SystemManager systemManager;
+    private Object jsonProvider;
 
 
     /* *****************************
      *
      */
-    public SecurityManagerImpl( Object provider ) throws Exception
+    public SecurityManagerImpl( Object provider )
     {
-        keyData = new SecurityKeyData();
-
-        Path secretKeyPwdFile = Paths.get( PEER_SECRET_KEY_PWD_FILE );
-
-        String secretPwd;
-
-        if ( Files.exists( secretKeyPwdFile ) )
-        {
-            secretPwd = new String( Files.readAllBytes( secretKeyPwdFile ) );
-
-            if ( Strings.isNullOrEmpty( secretPwd ) )
-            {
-                throw new IllegalStateException( "Peer secret key pwd is invalid" );
-            }
-        }
-        else
-        {
-            secretPwd = UUID.randomUUID().toString();
-
-            Files.write( secretKeyPwdFile, secretPwd.getBytes() );
-        }
-
-        keyData.setSecretKeyringPwd( secretPwd );
-
-        keyData.setJsonProvider( provider );
-
         httpContextManager = new HttpContextManagerImpl();
+        this.jsonProvider = provider;
     }
 
 
@@ -100,12 +73,11 @@ public class SecurityManagerImpl implements SecurityManager
     public void init()
     {
         securityDataService = new SecurityDataServiceImpl( daoManager );
-        keyManager = new KeyManagerImpl( securityDataService, keyServer, keyData );
-        encryptionTool = new EncryptionToolImpl( ( KeyManagerImpl ) keyManager );
+        keyManager = new KeyManagerImpl( systemManager, securityDataService, keyServer ,jsonProvider );
+        encryptionTool = new EncryptionToolImpl(( KeyManagerImpl ) keyManager );
         keyStoreManager = new KeyStoreManagerImpl();
         certificateManager = new CertificateManagerImpl();
     }
-
 
     /* *****************************
      *
@@ -179,6 +151,24 @@ public class SecurityManagerImpl implements SecurityManager
     }
 
 
+    /* *****************************
+     *
+     */
+    public SystemManager getSystemManager()
+    {
+        return systemManager;
+    }
+
+
+    /* *****************************
+     *
+     */
+    public void setSystemManager( final SystemManager systemManager )
+    {
+        this.systemManager = systemManager;
+    }
+
+
     /**
      * *****************************
      */
@@ -194,15 +184,6 @@ public class SecurityManagerImpl implements SecurityManager
     public void setEncryptionTool( final EncryptionTool encryptionTool )
     {
         this.encryptionTool = encryptionTool;
-    }
-
-
-    /* *****************************
-     *
-     */
-    public SecurityKeyData getSecurityKeyData()
-    {
-        return keyData;
     }
 
 

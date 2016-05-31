@@ -14,8 +14,8 @@
   </bean>
 
   <!-- ************************************************************************************************** -->
-
   <reference id="keyServer" interface="io.subutai.core.keyserver.api.KeyServer" />
+  <reference id="systemManager" interface="io.subutai.core.systemmanager.api.SystemManager" />
 
   <!-- ************************************************************************************************** -->
 
@@ -27,6 +27,7 @@
     <argument ref="jsonProvider" />
     <property name="daoManager" ref="daoSecurityManager" />
     <property name="keyServer" ref="keyServer" />
+    <property name="systemManager" ref="systemManager" />
 
   </bean>
 

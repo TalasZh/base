@@ -22,12 +22,12 @@ public interface RestService
     @GET
     @Path( "peer_settings" )
     @Produces( { MediaType.APPLICATION_JSON } )
-    public Response getPeerSettings();
+    public Response getSystemSettings();
 
     @POST
     @Path( "update_peer_settings" )
     @Produces( { MediaType.TEXT_PLAIN } )
-    public Response setPeerSettings();
+    public Response setSystemSettings();
 
 
     @GET
