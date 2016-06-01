@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import org.bouncycastle.openpgp.PGPException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -289,10 +290,18 @@ public class RegistrationManagerImpl implements RegistrationManager
     }
 
 
-    private void importHostPublicKey( String hostId, String publicKey )
+    private void importHostPublicKey( String hostId, String publicKey ) throws PGPException
     {
-        KeyManager keyManager = securityManager.getKeyManager();
-        keyManager.savePublicKeyRing( hostId, ( short ) 2, publicKey );
+        try
+        {
+            KeyManager keyManager = securityManager.getKeyManager();
+            keyManager.savePublicKeyRing( hostId, ( short ) 2, publicKey );
+        }
+        catch(Exception e)
+        {
+            LOG.error( "******* Error importing PublicKey", e );
+            throw new PGPException( e.getMessage() );
+        }
     }
 
 

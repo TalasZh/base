@@ -13,6 +13,8 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.bouncycastle.openpgp.PGPException;
+
 import io.subutai.core.security.rest.model.SecurityKeyData;
 
 
@@ -29,7 +31,7 @@ public interface SecurityManagerRest
     @Path( "keyman/addpublickeyring" )
     @Produces( { MediaType.APPLICATION_JSON } )
     public Response addPublicKeyRing( @FormParam( "hostid" ) String identityId,
-                                      @FormParam( "keytext" ) String keyText );
+                                      @FormParam( "keytext" ) String keyText ) throws PGPException;
 
 
     /* *******************************

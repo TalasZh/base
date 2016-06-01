@@ -88,13 +88,13 @@ public interface KeyManager
     /* *****************************
      *
      */
-    void savePublicKeyRing( String identityId, int type, String keyringAsASCII );
+    void savePublicKeyRing( String identityId, int type, String keyringAsASCII ) throws PGPException;
 
 
     /* *****************************
      *
      */
-    void savePublicKeyRing( String identityId, int type, PGPPublicKeyRing publicKeyRing );
+    void savePublicKeyRing( String identityId, int type, PGPPublicKeyRing publicKeyRing )  throws PGPException;
 
 
     /* ***************************************************************
@@ -102,14 +102,16 @@ public interface KeyManager
      */
     String getPeerId();
 
+
     /* ***************************************************************
      *
      */
     String getPeerOwnerId();
 
+
     /* ***************************************************************
-             *
-             */
+     *
+     */
     PGPPublicKeyRing signKey( PGPSecretKeyRing sourceSecRing, PGPPublicKeyRing targetPubRing, int trustLevel );
 
 
@@ -131,10 +133,14 @@ public interface KeyManager
     PGPPublicKeyRing setKeyTrust( PGPSecretKeyRing sourceSecRing, PGPPublicKeyRing targetPubRing, int trustLevel );
 
     /* ***************************************************************
-         *
-         */
+     *
+     */
     PGPPublicKeyRing setKeyTrust( String sourceFingerprint, String targetFingerprint, int trustLevel );
 
+
+    /* ***************************************************************
+     *
+     */
     PGPPublicKeyRing setKeyTrust( String sourceFingerprint, String targetFingerprint, String encryptedMessage )
             throws PGPException;
 
@@ -145,13 +151,13 @@ public interface KeyManager
     boolean verifySignature( String sourceFingerprint, String targetFingerprint );
 
     /* ***************************************************************
-         *
-         */
+     *
+     */
     boolean verifySignature( PGPPublicKeyRing sourcePubRing, PGPPublicKeyRing targetPubRing );
 
     /* ***************************************************************
-         *
-         */
+     *
+     */
     PGPPublicKeyRing removeSignature( String sourceFingerprint, String targetFingerprint );
 
 
@@ -161,8 +167,8 @@ public interface KeyManager
     PGPPublicKeyRing removeSignature( PGPPublicKey sourcePublicKey, PGPPublicKeyRing targetPubRing );
 
     /* ***************************************************************
-         *
-         */
+     *
+     */
     SecurityKeyTrust getKeyTrustData(String sourceFingerprint, String targetFingerprint);
 
 
@@ -200,7 +206,7 @@ public interface KeyManager
     /* *****************************
      *
      */
-     void saveSecretKeyRing( String hostId, int type, PGPSecretKeyRing publicKeyRing );
+     void saveSecretKeyRing( String hostId, int type, PGPSecretKeyRing publicKeyRing ) throws PGPException;
 
 
     /* *****************************

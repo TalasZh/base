@@ -12,6 +12,7 @@ import java.util.Set;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 
+import org.bouncycastle.openpgp.PGPException;
 import org.bouncycastle.openpgp.PGPPublicKeyRing;
 import org.bouncycastle.openpgp.PGPSecretKeyRing;
 import org.slf4j.Logger;
@@ -1756,12 +1757,13 @@ public class LocalPeerImpl implements LocalPeer, HostListener, Disposable
 
 
     @Override
-    public void addPeerEnvironmentPubKey( final String keyId, final PGPPublicKeyRing pubRing )
+    public void addPeerEnvironmentPubKey( final String keyId, final PGPPublicKeyRing pubRing ) throws PGPException
     {
         Preconditions.checkNotNull( keyId );
         Preconditions.checkNotNull( pubRing );
 
-        securityManager.getKeyManager().savePublicKeyRing( keyId, SecurityKeyType.PeerEnvironmentKey.getId(), pubRing );
+        securityManager.getKeyManager().savePublicKeyRing( keyId, SecurityKeyType.PeerEnvironmentKey.getId(),
+                    pubRing );
 
         // Build relation between LocalPeer => RemotePeer => Environment
         // for message encryption/decryption mechanism described in relation traits

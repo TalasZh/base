@@ -74,7 +74,7 @@ public class ConfigManager
         this.hPublicKey = PGPKeyHelper.readPublicKey( Common.H_PUB_KEY );
 
         this.ownerPublicKey =
-                securityManager.getKeyManager().getPublicKeyRing( securityManager.getKeyManager().getPeerOwnerId() )
+                securityManager.getKeyManager().getPublicKeyRing( identityManager.getPeerOwnerId() )
                                .getPublicKey();
 
         this.peerPublicKey = securityManager.getKeyManager().getPublicKey( null );

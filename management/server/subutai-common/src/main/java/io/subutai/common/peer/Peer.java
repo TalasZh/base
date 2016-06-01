@@ -4,6 +4,7 @@ package io.subutai.common.peer;
 import java.util.Date;
 import java.util.Map;
 
+import org.bouncycastle.openpgp.PGPException;
 import org.bouncycastle.openpgp.PGPPublicKeyRing;
 
 import io.subutai.common.command.CommandCallback;
@@ -253,7 +254,7 @@ public interface Peer extends RelationLink
 
     String getHistoricalMetrics( String hostName, Date startTime, Date endTime ) throws PeerException;
 
-    void addPeerEnvironmentPubKey( String keyId, PGPPublicKeyRing pek ) throws PeerException;
+    void addPeerEnvironmentPubKey( String keyId, PGPPublicKeyRing pek ) throws PeerException, PGPException;
 
     HostId getResourceHostIdByContainerId( ContainerId id ) throws PeerException;
 

@@ -3,6 +3,7 @@ package io.subutai.core.security.rest;
 
 import javax.ws.rs.core.Response;
 
+import org.bouncycastle.openpgp.PGPException;
 import org.bouncycastle.openpgp.PGPPublicKey;
 import org.bouncycastle.openpgp.PGPPublicKeyRing;
 import org.slf4j.Logger;
@@ -47,7 +48,7 @@ public class SecurityManagerRestImpl implements SecurityManagerRest
      *
      */
     @Override
-    public Response addPublicKeyRing( final String identityId, final String keyText )
+    public Response addPublicKeyRing( final String identityId, final String keyText ) throws PGPException
     {
         securityManager.getKeyManager().savePublicKeyRing( identityId, ( short ) 3, keyText );
 

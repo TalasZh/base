@@ -27,6 +27,7 @@ import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.auth.login.LoginContext;
 
+import org.bouncycastle.openpgp.PGPException;
 import org.bouncycastle.openpgp.PGPPublicKey;
 import org.bouncycastle.openpgp.PGPPublicKeyRing;
 import org.slf4j.Logger;
@@ -789,7 +790,7 @@ public class IdentityManagerImpl implements IdentityManager
      */
     @PermitAll
     @Override
-    public void setUserPublicKey( long userId, String publicKeyASCII )
+    public void setUserPublicKey( long userId, String publicKeyASCII ) throws PGPException
     {
 
         User user = identityDataService.getUser( userId );

@@ -67,7 +67,7 @@ public class SystemDataServiceImpl implements SystemDataService
     {
         try
         {
-            systemSettingsDAO.persist( systemSettings );
+            systemSettingsDAO.update( systemSettings );
         }
         catch(Exception ex)
         {

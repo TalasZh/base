@@ -139,7 +139,7 @@ public class SystemSettingsDAO
     /* *************************************************
      *
      */
-    public void update( final SecuritySettings item )
+    public void update( final SystemSettings item )
     {
         EntityManager em = daoManager.getEntityManagerFromFactory();
         try

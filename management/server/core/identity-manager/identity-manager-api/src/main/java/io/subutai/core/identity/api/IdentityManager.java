@@ -7,6 +7,8 @@ import java.util.concurrent.Callable;
 
 import javax.annotation.security.PermitAll;
 
+import org.bouncycastle.openpgp.PGPException;
+
 import io.subutai.common.security.exception.SystemSecurityException;
 import io.subutai.common.security.objects.PermissionObject;
 import io.subutai.common.security.objects.PermissionOperation;
@@ -132,7 +134,7 @@ public interface IdentityManager
 
     /* *************************************************
      */
-    void setUserPublicKey( long userId, String publicKeyASCII );
+    void setUserPublicKey( long userId, String publicKeyASCII ) throws PGPException;
 
 
     /* *************************************************

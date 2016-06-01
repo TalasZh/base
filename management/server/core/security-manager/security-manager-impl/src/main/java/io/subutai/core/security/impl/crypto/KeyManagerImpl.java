@@ -34,7 +34,6 @@ import io.subutai.common.security.crypto.pgp.PGPEncryptionUtil;
 import io.subutai.common.security.crypto.pgp.PGPKeyUtil;
 import io.subutai.common.security.objects.KeyTrustLevel;
 import io.subutai.common.security.objects.SecurityKeyType;
-import io.subutai.common.settings.Common;
 import io.subutai.common.util.DateUtil;
 import io.subutai.common.util.RestUtil;
 import io.subutai.core.keyserver.api.KeyServer;
@@ -111,13 +110,14 @@ public class KeyManagerImpl implements KeyManager
 
                 String fingerprint = PGPKeyUtil.getFingerprint( peerPubRing.getPublicKey().getFingerprint() );
 
+                //*******************************************
+                systemSettings   = systemManager.saveSystemSettings( fingerprint, "owner-" + fingerprint );
+                securitySettings = systemManager.saveSecuritySettings( fingerprint, secretKeyPwd );
+                //*******************************************
+
                 saveSecretKeyRing( fingerprint, SecurityKeyType.PeerKey.getId(), peerSecRing );
                 savePublicKeyRing( fingerprint, SecurityKeyType.PeerKey.getId(), peerPubRing );
 
-                //*******************************************
-                systemSettings = systemManager.saveSystemSettings( fingerprint, "owner-" + fingerprint );
-                securitySettings = systemManager.saveSecuritySettings( fingerprint, secretKeyPwd );
-                //*******************************************
             }
         }
         catch ( Exception ex )
@@ -476,7 +476,7 @@ public class KeyManagerImpl implements KeyManager
      *
      */
     @Override
-    public void saveSecretKeyRing( String identityId, int type, PGPSecretKeyRing secretKeyRing )
+    public void saveSecretKeyRing( String identityId, int type, PGPSecretKeyRing secretKeyRing ) throws PGPException
     {
         try
         {
@@ -497,6 +497,7 @@ public class KeyManagerImpl implements KeyManager
         catch ( Exception ex )
         {
             LOG.error( " ******** Error storing Public key:" + ex.toString(), ex );
+            throw new PGPException(ex.getMessage());
         }
     }
 
@@ -505,7 +506,7 @@ public class KeyManagerImpl implements KeyManager
      *
      */
     @Override
-    public void savePublicKeyRing( String identityId, int type, String keyringAsASCII )
+    public void savePublicKeyRing( String identityId, int type, String keyringAsASCII )  throws PGPException
     {
         try
         {
@@ -519,6 +520,7 @@ public class KeyManagerImpl implements KeyManager
         catch ( Exception ex )
         {
             LOG.error( " ******** Error storing Public key:" + ex.toString(), ex );
+            throw new  PGPException( ex.getMessage() );
         }
     }
 
@@ -527,7 +529,7 @@ public class KeyManagerImpl implements KeyManager
      *
      */
     @Override
-    public void savePublicKeyRing( String identityId, int type, PGPPublicKeyRing publicKeyRing )
+    public void savePublicKeyRing( String identityId, int type, PGPPublicKeyRing publicKeyRing ) throws PGPException
     {
         try
         {
@@ -551,7 +553,8 @@ public class KeyManagerImpl implements KeyManager
         }
         catch ( Exception ex )
         {
-            LOG.error( " ******** Error storing Public key:" + ex.toString(), ex );
+            LOG.error( " ******** Error storing Secret key:" + ex.toString(), ex );
+            throw new  PGPException( ex.getMessage() );
         }
     }
 
