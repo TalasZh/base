@@ -3,6 +3,7 @@ package io.subutai.core.identity.impl;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.security.AccessControlContext;
 import java.security.AccessControlException;
 import java.security.AccessController;
@@ -86,7 +87,6 @@ import io.subutai.core.systemmanager.api.model.SystemSettings;
 
 /**
  * Overall Subutai Identity Management
- *
  */
 @PermitAll
 public class IdentityManagerImpl implements IdentityManager
@@ -95,7 +95,7 @@ public class IdentityManagerImpl implements IdentityManager
     private static final Logger LOGGER = LoggerFactory.getLogger( IdentityManagerImpl.class.getName() );
 
     private static final String SYSTEM_USERNAME = "internal";
-    private static final int  IDENTITY_LIFETIME =  240; //hours
+    private static final int IDENTITY_LIFETIME = 240; //hours
 
     private IdentityDataService identityDataService = null;
     private SecurityController securityController = null;
@@ -493,19 +493,21 @@ public class IdentityManagerImpl implements IdentityManager
      */
     @PermitAll
     @Override
-    public String updateUserAuthId( User user , String authId ) throws SystemSecurityException
+    public String updateUserAuthId( User user, String authId ) throws SystemSecurityException
     {
-        if(user != null)
+        if ( user != null )
         {
-            if(Strings.isNullOrEmpty( authId ))
+            if ( Strings.isNullOrEmpty( authId ) )
+            {
                 authId = UUID.randomUUID().toString();
+            }
 
-            if( authId.length() < 4 )
+            if ( authId.length() < 4 )
             {
                 throw new IllegalArgumentException( "Password cannot be shorter than 4 characters" );
             }
 
-            if(user.getAuthId() .equals( authId ) )
+            if ( user.getAuthId().equals( authId ) )
             {
                 throw new IllegalArgumentException( "NewPassword cannot be the same as old one." );
             }
@@ -530,12 +532,12 @@ public class IdentityManagerImpl implements IdentityManager
     {
         try
         {
-            if(user != null)
+            if ( user != null )
             {
                 String authId = user.getAuthId();
                 PGPPublicKey pubKey = securityManager.getKeyManager().getPublicKey( user.getSecurityKeyId() );
 
-                if(pubKey != null)
+                if ( pubKey != null )
                 {
                     byte enc[] = securityManager.getEncryptionTool().encrypt( authId.getBytes(), pubKey, true );
 
@@ -551,7 +553,7 @@ public class IdentityManagerImpl implements IdentityManager
                 throw new InvalidLoginException( "User not found." );
             }
         }
-        catch(Exception e)
+        catch ( Exception e )
         {
             LOGGER.error( " **** Error creating encrypted userAuth message ****", e );
         }
@@ -567,6 +569,15 @@ public class IdentityManagerImpl implements IdentityManager
     public User authenticateByAuthSignature( final String fingerprint, final String signedAuth )
             throws SystemSecurityException
     {
+        String msg = null;
+        try
+        {
+            msg = URLDecoder.decode( signedAuth, "UTF-8" );
+        }
+        catch ( UnsupportedEncodingException e )
+        {
+            LOGGER.error( e.getMessage() );
+        }
         KeyManager keyManager = securityManager.getKeyManager();
         EncryptionTool encryptionTool = securityManager.getEncryptionTool();
 
@@ -574,7 +585,7 @@ public class IdentityManagerImpl implements IdentityManager
 
         try
         {
-            if ( !encryptionTool.verifyClearSign( signedAuth.trim().getBytes(), publicKeyRing ) )
+            if ( msg==null || !encryptionTool.verifyClearSign( msg.trim().getBytes(), publicKeyRing ) )
             {
                 throw new InvalidLoginException( "Signed Auth verification failed." );
             }
@@ -588,13 +599,12 @@ public class IdentityManagerImpl implements IdentityManager
 
             String authId = new String( encryptionTool.extractClearSignContent( signedAuth.getBytes() ) );
 
-            if ( !user.isIdentityValid() || !user.getAuthId().equals( authId.trim()))
+            if ( !user.isIdentityValid() || !user.getAuthId().equals( authId.trim() ) )
             {
                 throw new IdentityExpiredException( "User Credentials are expired" );
             }
 
             return user;
-
         }
         catch ( Exception e )
         {
@@ -634,7 +644,7 @@ public class IdentityManagerImpl implements IdentityManager
      */
     @PermitAll
     @Override
-    public User authenticateUser( String userName, String password )  throws SystemSecurityException
+    public User authenticateUser( String userName, String password ) throws SystemSecurityException
     {
         User user = null;
 
@@ -656,13 +666,13 @@ public class IdentityManagerImpl implements IdentityManager
 
                 if ( !pswHash.equals( user.getPassword() ) || user.getStatus() == UserStatus.Disabled.getId() )
                 {
-                    throw new InvalidLoginException( "***** Invalid Login for user:" + userName);
+                    throw new InvalidLoginException( "***** Invalid Login for user:" + userName );
                 }
                 else
                 {
-                    if(!user.isIdentityValid())
+                    if ( !user.isIdentityValid() )
                     {
-                        throw new IdentityExpiredException( "***** Identity Expired for user:" + userName);
+                        throw new IdentityExpiredException( "***** Identity Expired for user:" + userName );
                     }
                 }
             }
@@ -1039,7 +1049,6 @@ public class IdentityManagerImpl implements IdentityManager
             user.setFullName( fullName );
             user.setType( type );
             user.setAuthId( UUID.randomUUID().toString() );
-
         }
         catch ( NoSuchAlgorithmException e )
         {
@@ -1329,7 +1338,7 @@ public class IdentityManagerImpl implements IdentityManager
     public boolean changeUserPassword( String userName, String oldPassword, String newPassword ) throws Exception
     {
         User user = identityDataService.getUserByUsername( userName );
-        return changeUserPassword(user,oldPassword,newPassword);
+        return changeUserPassword( user, oldPassword, newPassword );
     }
 
 
@@ -1340,7 +1349,7 @@ public class IdentityManagerImpl implements IdentityManager
     public boolean changeUserPassword( long userId, String oldPassword, String newPassword ) throws Exception
     {
         User user = identityDataService.getUser( userId );
-        return changeUserPassword(user,oldPassword,newPassword);
+        return changeUserPassword( user, oldPassword, newPassword );
     }
 
 
@@ -1352,7 +1361,7 @@ public class IdentityManagerImpl implements IdentityManager
     {
         String salt;
 
-        if(oldPassword.equals( newPassword ))
+        if ( oldPassword.equals( newPassword ) )
         {
             throw new IllegalArgumentException( "NewPassword cannot be the same as old one." );
         }
