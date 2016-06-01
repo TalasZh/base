@@ -18,6 +18,8 @@ import io.subutai.common.security.crypto.pgp.ContentAndSignatures;
 import io.subutai.common.security.crypto.pgp.KeyPair;
 import io.subutai.common.security.crypto.pgp.PGPEncryptionUtil;
 import io.subutai.core.security.api.crypto.EncryptionTool;
+import io.subutai.core.systemmanager.api.model.SecuritySettings;
+import io.subutai.core.systemmanager.api.model.SystemSettings;
 
 
 /**
@@ -26,17 +28,17 @@ import io.subutai.core.security.api.crypto.EncryptionTool;
 public class EncryptionToolImpl implements EncryptionTool
 {
     private static final Logger LOG = LoggerFactory.getLogger( EncryptionToolImpl.class );
-
     private final KeyManagerImpl keyManager;
 
 
     /* *****************************************
      *
      */
-    public EncryptionToolImpl( KeyManagerImpl keyManager )
+    public EncryptionToolImpl(KeyManagerImpl keyManager )
     {
         this.keyManager = keyManager;
         this.keyManager.setEncryptionTool( this );
+
     }
 
 
@@ -47,7 +49,7 @@ public class EncryptionToolImpl implements EncryptionTool
     public byte[] decrypt( final byte[] message ) throws PGPException
     {
         return PGPEncryptionUtil.decrypt( message, keyManager.getSecretKeyRingInputStream( null ),
-                keyManager.getSecurityKeyData().getSecretKeyringPwd() );
+                keyManager.getSecuritySettings().getKeyPassword() );
     }
 
 
@@ -59,7 +61,7 @@ public class EncryptionToolImpl implements EncryptionTool
     {
         if ( Strings.isNullOrEmpty( pwd ) )
         {
-            pwd = keyManager.getSecurityKeyData().getSecretKeyringPwd();
+            pwd = keyManager.getSecuritySettings().getKeyPassword();
         }
 
         PGPSecretKeyRing secKeyRing = keyManager.getSecretKeyRing( secretKeyHostId );
@@ -77,7 +79,7 @@ public class EncryptionToolImpl implements EncryptionTool
     {
         if ( Strings.isNullOrEmpty( pwd ) )
         {
-            pwd = keyManager.getSecurityKeyData().getSecretKeyringPwd();
+            pwd = keyManager.getSecuritySettings().getKeyPassword();
         }
 
         return PGPEncryptionUtil.decryptAndVerify( message, secretKey, pwd, pubKey );
@@ -165,7 +167,7 @@ public class EncryptionToolImpl implements EncryptionTool
     {
         if ( Strings.isNullOrEmpty( pwd ) )
         {
-            pwd = keyManager.getSecurityKeyData().getSecretKeyringPwd();
+            pwd = keyManager.getSecuritySettings().getKeyPassword();
         }
 
         return PGPEncryptionUtil.decrypt( message, keyRing, pwd );
@@ -222,7 +224,7 @@ public class EncryptionToolImpl implements EncryptionTool
     {
 
         return PGPEncryptionUtil.signAndEncrypt( message, keyManager.getSecretKey( null ),
-                keyManager.getSecurityKeyData().getSecretKeyringPwd(), publicKey, armored );
+                keyManager.getSecuritySettings().getKeyPassword(), publicKey, armored );
     }
 
 
@@ -236,7 +238,7 @@ public class EncryptionToolImpl implements EncryptionTool
 
         if ( Strings.isNullOrEmpty( secretPwd ) )
         {
-            secretPwd = keyManager.getSecurityKeyData().getSecretKeyringPwd();
+            secretPwd = keyManager.getSecuritySettings().getKeyPassword();
         }
 
         return PGPEncryptionUtil.signAndEncrypt( message, secretKey, secretPwd, publicKey, armored );
@@ -294,7 +296,7 @@ public class EncryptionToolImpl implements EncryptionTool
     public ContentAndSignatures decryptAndReturnSignatures( final byte[] encryptedMessage ) throws PGPException
     {
         return PGPEncryptionUtil.decryptAndReturnSignatures( encryptedMessage, keyManager.getSecretKeyRing( null ),
-                keyManager.getSecurityKeyData().getSecretKeyringPwd() );
+                keyManager.getSecuritySettings().getKeyPassword() );
     }
 
 
@@ -347,7 +349,7 @@ public class EncryptionToolImpl implements EncryptionTool
         {
             if ( Strings.isNullOrEmpty( secretKeyPassword ) )
             {
-                secretKeyPassword = keyManager.getSecurityKeyData().getSecretKeyringPwd();
+                secretKeyPassword = keyManager.getSecuritySettings().getKeyPassword();
             }
 
             return PGPEncryptionUtil.signPublicKey( publicKeyRing, id, secretKey, secretKeyPassword );

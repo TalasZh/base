@@ -80,6 +80,8 @@ import io.subutai.core.security.api.SecurityManager;
 import io.subutai.core.security.api.crypto.EncryptionTool;
 import io.subutai.core.security.api.crypto.KeyManager;
 import io.subutai.core.security.api.model.SecurityKey;
+import io.subutai.core.systemmanager.api.SystemManager;
+import io.subutai.core.systemmanager.api.model.SystemSettings;
 
 
 /**
@@ -99,6 +101,7 @@ public class IdentityManagerImpl implements IdentityManager
     private DaoManager daoManager = null;
     private SecurityManager securityManager = null;
     private SessionManager sessionManager = null;
+    private SystemManager systemManager = null;
 
 
     /* *************************************************
@@ -688,7 +691,13 @@ public class IdentityManagerImpl implements IdentityManager
     @Override
     public void setPeerOwner( User user )
     {
-        securityManager.getKeyManager().setPeerOwnerId( user.getSecurityKeyId() );
+        SystemSettings sysSettings = systemManager.getSystemSettings( null );
+
+        if(sysSettings != null )
+        {
+            sysSettings.setPeerOwnerId( user.getSecurityKeyId() );
+            systemManager.saveSystemSettings( sysSettings );
+        }
     }
 
 
@@ -698,7 +707,16 @@ public class IdentityManagerImpl implements IdentityManager
     @Override
     public String getPeerOwnerId()
     {
-        return securityManager.getKeyManager().getPeerOwnerId();
+        SystemSettings sysSettings = systemManager.getSystemSettings( null );
+
+        if(sysSettings != null )
+        {
+            return sysSettings.getPeerOwnerId();
+        }
+        else
+        {
+            return "";
+        }
     }
 
 
@@ -1781,6 +1799,20 @@ public class IdentityManagerImpl implements IdentityManager
         User user = identityDataService.getUserByUsername( username );
 
         return user == null;
+    }
+
+
+    /* *************************************************
+     */
+    public SystemManager getSystemManager()
+    {
+        return systemManager;
+    }
+
+
+    public void setSystemManager( final SystemManager systemManager )
+    {
+        this.systemManager = systemManager;
     }
 
 

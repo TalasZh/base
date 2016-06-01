@@ -9,6 +9,7 @@ import java.security.AccessControlException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -34,7 +35,6 @@ import io.subutai.common.security.crypto.pgp.PGPKeyUtil;
 import io.subutai.common.security.objects.KeyTrustLevel;
 import io.subutai.common.security.objects.SecurityKeyType;
 import io.subutai.common.settings.Common;
-import io.subutai.common.util.CollectionUtil;
 import io.subutai.common.util.DateUtil;
 import io.subutai.common.util.RestUtil;
 import io.subutai.core.keyserver.api.KeyServer;
@@ -44,7 +44,9 @@ import io.subutai.core.security.api.dao.SecurityDataService;
 import io.subutai.core.security.api.model.SecretKeyStore;
 import io.subutai.core.security.api.model.SecurityKey;
 import io.subutai.core.security.api.model.SecurityKeyTrust;
-import io.subutai.core.security.impl.model.SecurityKeyData;
+import io.subutai.core.systemmanager.api.SystemManager;
+import io.subutai.core.systemmanager.api.model.SecuritySettings;
+import io.subutai.core.systemmanager.api.model.SystemSettings;
 
 
 /**
@@ -56,23 +58,25 @@ public class KeyManagerImpl implements KeyManager
 {
     private static final Logger LOG = LoggerFactory.getLogger( KeyManagerImpl.class );
 
-    private static final String PEER_ID_FILE = String.format( "%s/%s", Common.SUBUTAI_APP_KEYSTORES_PATH, "peer.id" );
-
     private SecurityDataService securityDataService = null;
     private KeyServer keyServer = null;
-    private SecurityKeyData keyData = null;
     private EncryptionTool encryptionTool = null;
+    private SystemSettings systemSettings;
+    private SecuritySettings securitySettings;
+    private SystemManager systemManager;
+    private Object jsonProvider;
 
 
     /* *****************************
      *
      */
-    public KeyManagerImpl( SecurityDataService securityDataService, KeyServer keyServer,
-                           SecurityKeyData securityKeyData )
+    public KeyManagerImpl( SystemManager systemManager, SecurityDataService securityDataService, KeyServer keyServer,
+                           Object jsonProvider )
     {
-        this.keyData = securityKeyData;
         this.securityDataService = securityDataService;
         this.keyServer = keyServer;
+        this.systemManager = systemManager;
+        this.jsonProvider = jsonProvider;
 
         init();
     }
@@ -89,33 +93,31 @@ public class KeyManagerImpl implements KeyManager
 
     private void init()
     {
-
         try
         {
-            List<SecurityKey> peerKeyList = securityDataService.getKeyDataByType( SecurityKeyType.PeerKey.getId() );
+            systemSettings = systemManager.getSystemSettings( null );
+            securitySettings = systemManager.getSecuritySettings( null );
 
-            if ( !CollectionUtil.isCollectionEmpty( peerKeyList ) )
+            if ( systemSettings == null )
             {
-                //assume there is always one Peer Key
-                SecurityKey peerKey = peerKeyList.get( 0 );
+                String secretKeyPwd = UUID.randomUUID().toString();
 
-                keyData.setManHostId( peerKey.getPublicKeyFingerprint() );
-            }
-            else
-            {
                 KeyPair keyPair = PGPEncryptionUtil
                         .generateKeyPair( String.format( "subutai%d@subutai.io", DateUtil.getUnixTimestamp() ),
-                                keyData.getSecretKeyringPwd(), true );
+                                secretKeyPwd, true );
 
                 PGPPublicKeyRing peerPubRing = PGPKeyUtil.readPublicKeyRing( keyPair.getPubKeyring() );
                 PGPSecretKeyRing peerSecRing = PGPKeyUtil.readSecretKeyRing( keyPair.getSecKeyring() );
 
-                String peerId = PGPKeyUtil.getFingerprint( peerPubRing.getPublicKey().getFingerprint() );
+                String fingerprint = PGPKeyUtil.getFingerprint( peerPubRing.getPublicKey().getFingerprint() );
 
-                keyData.setManHostId( peerId );
+                saveSecretKeyRing( fingerprint, SecurityKeyType.PeerKey.getId(), peerSecRing );
+                savePublicKeyRing( fingerprint, SecurityKeyType.PeerKey.getId(), peerPubRing );
 
-                saveSecretKeyRing( peerId, SecurityKeyType.PeerKey.getId(), peerSecRing );
-                savePublicKeyRing( peerId, SecurityKeyType.PeerKey.getId(), peerPubRing );
+                //*******************************************
+                systemSettings = systemManager.saveSystemSettings( fingerprint, "owner-" + fingerprint );
+                securitySettings = systemManager.saveSecuritySettings( fingerprint, secretKeyPwd );
+                //*******************************************
             }
         }
         catch ( Exception ex )
@@ -131,19 +133,8 @@ public class KeyManagerImpl implements KeyManager
     @Override
     public String getPeerId()
     {
-        return keyData.getManHostId();
+        return systemSettings.getPeerId();
     }
-
-
-    /* ***************************************************************
-     *
-     */
-    @Override
-    public void setPeerOwnerId( String id )
-    {
-        keyData.setPeerOwnerId( id );
-    }
-
 
     /* ***************************************************************
      *
@@ -151,7 +142,17 @@ public class KeyManagerImpl implements KeyManager
     @Override
     public String getPeerOwnerId()
     {
-        return keyData.getPeerOwnerId();
+        return systemSettings.getPeerOwnerId();
+    }
+
+
+
+    /* ***************************************************************
+     *
+     */
+    public SecuritySettings getSecuritySettings()
+    {
+        return securitySettings;
     }
 
 
@@ -485,7 +486,7 @@ public class KeyManagerImpl implements KeyManager
             {
                 // Store secretKey
                 String fingerprint = PGPKeyUtil.getFingerprint( publicKey.getFingerprint() );
-                String pwd = keyData.getSecretKeyringPwd();
+                String pwd = securitySettings.getKeyPassword();
 
                 //*******************
                 securityDataService.saveSecretKeyData( fingerprint, secretKeyRing.getEncoded(), pwd, type );
@@ -534,7 +535,7 @@ public class KeyManagerImpl implements KeyManager
 
             if ( Strings.isNullOrEmpty( identityId ) )
             {
-                identityId = keyData.getManHostId();
+                identityId = systemSettings.getPeerId();
             }
 
             if ( publicKey != null )
@@ -563,7 +564,7 @@ public class KeyManagerImpl implements KeyManager
     {
         try
         {
-            if ( !Objects.equals( identityId, keyData.getManHostId() ) )
+            if ( !Objects.equals( identityId, systemSettings.getPeerId() ) )
             {
                 String fingerprint = getFingerprint( identityId );
                 securityDataService.removeKeyData( identityId );
@@ -588,7 +589,7 @@ public class KeyManagerImpl implements KeyManager
     {
         try
         {
-            if ( !Objects.equals( identityId, keyData.getManHostId() ) )
+            if ( !Objects.equals( identityId, systemSettings.getPeerId() ) )
             {
                 SecurityKey keyIden = securityDataService.getKeyData( identityId );
 
@@ -622,7 +623,7 @@ public class KeyManagerImpl implements KeyManager
         {
             if ( Strings.isNullOrEmpty( identityId ) )
             {
-                identityId = keyData.getManHostId();
+                identityId = systemSettings.getPeerId();
             }
             keyIden = securityDataService.getKeyData( identityId );
         }
@@ -661,7 +662,7 @@ public class KeyManagerImpl implements KeyManager
     {
         try
         {
-            if ( !Objects.equals( identityId, keyData.getManHostId() ) )
+            if ( !Objects.equals( identityId, systemSettings.getPeerId() ) )
             {
                 String fingerprint = getFingerprint( identityId );
 
@@ -737,7 +738,7 @@ public class KeyManagerImpl implements KeyManager
     {
         if ( Strings.isNullOrEmpty( identityId ) )
         {
-            identityId = keyData.getManHostId();
+            identityId = systemSettings.getPeerId();
         }
 
         try
@@ -773,7 +774,7 @@ public class KeyManagerImpl implements KeyManager
 
         if ( Strings.isNullOrEmpty( identityId ) )
         {
-            identityId = keyData.getManHostId();
+            identityId = systemSettings.getPeerId();
         }
 
         try
@@ -811,7 +812,7 @@ public class KeyManagerImpl implements KeyManager
 
         if ( Strings.isNullOrEmpty( identityId ) )
         {
-            identityId = keyData.getManHostId();
+            identityId = systemSettings.getPeerId();
         }
 
         try
@@ -835,7 +836,7 @@ public class KeyManagerImpl implements KeyManager
     {
         if ( Strings.isNullOrEmpty( identityId ) )
         {
-            identityId = keyData.getManHostId();
+            identityId = systemSettings.getPeerId();
         }
 
         try
@@ -881,7 +882,7 @@ public class KeyManagerImpl implements KeyManager
     {
         if ( Strings.isNullOrEmpty( identityId ) )
         {
-            identityId = keyData.getManHostId();
+            identityId = systemSettings.getPeerId();
         }
 
         try
@@ -914,7 +915,7 @@ public class KeyManagerImpl implements KeyManager
     {
         if ( Strings.isNullOrEmpty( identityId ) )
         {
-            identityId = keyData.getManHostId();
+            identityId = systemSettings.getPeerId();
         }
 
         try
@@ -948,7 +949,7 @@ public class KeyManagerImpl implements KeyManager
 
         if ( Strings.isNullOrEmpty( identityId ) )
         {
-            identityId = keyData.getManHostId();
+            identityId = systemSettings.getPeerId();
         }
 
         try
@@ -957,7 +958,7 @@ public class KeyManagerImpl implements KeyManager
 
             if ( secretKey != null )
             {
-                privateKey = PGPEncryptionUtil.getPrivateKey( secretKey, keyData.getSecretKeyringPwd() );
+                privateKey = PGPEncryptionUtil.getPrivateKey( secretKey, securitySettings.getKeyPassword() );
 
                 return privateKey;
             }
@@ -1041,15 +1042,6 @@ public class KeyManagerImpl implements KeyManager
     }
 
 
-    /* *****************************
-      *
-      */
-    public SecurityKeyData getSecurityKeyData()
-    {
-        return keyData;
-    }
-
-
     /* *****************************************
      *
      */
@@ -1060,7 +1052,7 @@ public class KeyManagerImpl implements KeyManager
 
         try
         {
-            keyPair = PGPEncryptionUtil.generateKeyPair( identityId, keyData.getSecretKeyringPwd(), armored );
+            keyPair = PGPEncryptionUtil.generateKeyPair( identityId, securitySettings.getKeyPassword(), armored );
             return keyPair;
         }
         catch ( Exception ex )
@@ -1096,7 +1088,7 @@ public class KeyManagerImpl implements KeyManager
     {
         try
         {
-            if ( !Objects.equals( identityId, keyData.getManHostId() ) )
+            if ( !Objects.equals( identityId, systemSettings.getPeerId() ) )
             {
                 removeSecretKeyRing( identityId );
                 removePublicKeyRing( identityId );
@@ -1129,7 +1121,7 @@ public class KeyManagerImpl implements KeyManager
             if ( pubRing == null ) // Get from HTTP
             {
                 String baseUrl = String.format( "%s/rest/v1", peerInfo.getPublicUrl() );
-                WebClient client = RestUtil.createTrustedWebClient( baseUrl, keyData.getJsonProvider() );
+                WebClient client = RestUtil.createTrustedWebClient( baseUrl, jsonProvider);
                 client.type( MediaType.MULTIPART_FORM_DATA ).accept( MediaType.APPLICATION_JSON );
 
                 Response response =

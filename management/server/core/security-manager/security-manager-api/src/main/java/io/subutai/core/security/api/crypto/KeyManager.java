@@ -70,12 +70,6 @@ public interface KeyManager
     /* *****************************
      *
      */
-    public String getPeerId();
-
-
-    /* *****************************
-     *
-     */
     PGPSecretKey getSecretKey( String identityId );
 
 
@@ -106,7 +100,7 @@ public interface KeyManager
     /* ***************************************************************
      *
      */
-    void setPeerOwnerId( String id );
+    String getPeerId();
 
     /* ***************************************************************
      *

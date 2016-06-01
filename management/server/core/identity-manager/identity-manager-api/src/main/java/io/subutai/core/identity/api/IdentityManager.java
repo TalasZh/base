@@ -72,11 +72,11 @@ public interface IdentityManager
 
     /* *************************************************
      */
-    @PermitAll
     String updateUserAuthId( User user, String authId ) throws SystemSecurityException;
 
+
     /* *************************************************
-         */
+     */
     String getEncryptedUserAuthId( User user ) throws SystemSecurityException;
 
 
@@ -93,7 +93,6 @@ public interface IdentityManager
     /* *************************************************
      */
     User authenticateUser( String userName, String password );
-
 
 
     /* *************************************************

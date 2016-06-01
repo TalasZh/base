@@ -183,10 +183,12 @@ public class RelationInfoManagerImpl implements RelationInfoManager
     // C should give correct verification through relationship path.
     private boolean isRelationValid( final RelationInfo relationInfo, final RelationMeta relationMeta )
     {
+
+        /* //TODO GET FROM SYSTEMMANAGER
         if ( !SystemSettings.getKeyTrustCheckState() )
         {
             return true;
-        }
+        }*/
 
         Set<RelationLink> relationLinks = Sets.newHashSet();
 
@@ -233,10 +235,13 @@ public class RelationInfoManagerImpl implements RelationInfoManager
     private int getDeeper( final RelationInfo relationInfo, final RelationLink target, final RelationLink object,
                            Set<RelationLink> relationLinks )
     {
+        //TODO GET FROM SYSTEMMANAGER
+        /*
         if ( !SystemSettings.getKeyTrustCheckState() )
         {
             return 0;
-        }
+        }*/
+
         List<Relation> byTargetRelations = relationDataService.findByTarget( target );
         relationLinks.add( target );
         // When relation info is found check that relation was granted from verified source
@@ -498,10 +503,12 @@ public class RelationInfoManagerImpl implements RelationInfoManager
                                final RelationInfoMeta relationInfoMeta, final String encodedToken )
             throws RelationVerificationException
     {
+        //TODO GET FROM SYSTEMMANAGER
+        /*
         if ( !SystemSettings.getKeyTrustCheckState() )
         {
             return;
-        }
+        }*/
 
         if ( !Strings.isNullOrEmpty( encodedToken ) )
         {
