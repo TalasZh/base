@@ -6,7 +6,10 @@ import java.util.Map;
 import com.google.common.collect.Maps;
 
 import io.subutai.common.environment.HostAddresses;
+import io.subutai.common.host.ContainerHostState;
+import io.subutai.common.peer.ContainerHost;
 import io.subutai.common.peer.EnvironmentId;
+import io.subutai.common.peer.ResourceHost;
 import io.subutai.common.security.SshKeys;
 import io.subutai.core.hubmanager.impl.environment.state.Context;
 import io.subutai.core.hubmanager.impl.environment.state.StateHandler;
@@ -36,6 +39,8 @@ public class ConfigureContainerStateHandler extends StateHandler
         peerDto = configureSsh( peerDto, envDto );
 
         configureHosts( envDto );
+
+        processContainerEvent();
 
         logEnd();
 
@@ -90,5 +95,34 @@ public class ConfigureContainerStateHandler extends StateHandler
         }
 
         ctx.localPeer.configureHostsInEnvironment( new EnvironmentId( envDto.getId() ), new HostAddresses( hostAddresses ) );
+    }
+
+    public void processContainerEvent( ) throws Exception
+    {
+        int limitOfTry = 0;
+        while ( limitOfTry < 3 )
+        {
+            int notRunningCh = 0;
+            for ( ResourceHost rh : ctx.localPeer.getResourceHosts() )
+            {
+                for ( ContainerHost ch : rh.getContainerHosts() )
+                {
+                    if ( !ch.getState().equals( ContainerHostState.RUNNING ) )
+                    {
+                        notRunningCh++;
+                    }
+                }
+            }
+            if ( notRunningCh > 0 )
+            {
+                ctx.hubManager.processContainerEventProcessor();
+                limitOfTry++;
+            }
+            else
+            {
+                break;
+            }
+        }
+
     }
 }

@@ -220,7 +220,7 @@ public class HubManagerImpl implements HubManager
 
         StateLinkProcessor tunnelProcessor = new TunnelProcessor( peerManager, configManager );
 
-        Context ctx = new Context( identityManager, envManager, envUserHelper, localPeer, restClient );
+        Context ctx = new Context( identityManager, envManager, envUserHelper, localPeer, restClient, this );
 
         StateLinkProcessor hubEnvironmentProcessor = new HubEnvironmentProcessor( ctx );
 
@@ -284,6 +284,13 @@ public class HubManagerImpl implements HubManager
                 }
             }
         } );
+    }
+
+
+    @Override
+    public void processContainerEventProcessor() throws Exception
+    {
+        containerEventProcessor.process();
     }
 
 

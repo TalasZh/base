@@ -19,6 +19,8 @@ public interface HubManager
 
     void triggerHeartbeat();
 
+    void processContainerEventProcessor() throws Exception;
+
     void sendResourceHostInfo() throws Exception;
 
     String getHubDns() throws Exception;
