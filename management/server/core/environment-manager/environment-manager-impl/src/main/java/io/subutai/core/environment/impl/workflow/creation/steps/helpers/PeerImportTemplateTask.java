@@ -11,6 +11,7 @@ import com.google.common.collect.Sets;
 import io.subutai.common.environment.Node;
 import io.subutai.common.environment.PrepareTemplatesRequest;
 import io.subutai.common.environment.PrepareTemplatesResponse;
+import io.subutai.common.peer.LocalPeer;
 import io.subutai.common.peer.Peer;
 import io.subutai.common.tracker.TrackerOperation;
 
@@ -20,15 +21,17 @@ public class PeerImportTemplateTask implements Callable<PrepareTemplatesResponse
 
     private final String environmentId;
     private final Peer peer;
+    private final LocalPeer localPeer;
     private final Set<Node> nodes;
     private final TrackerOperation trackerOperation;
 
 
-    public PeerImportTemplateTask( final String environmentId, final Peer peer, final Set<Node> nodes,
-                                   final TrackerOperation trackerOperation )
+    public PeerImportTemplateTask( final String environmentId, final Peer peer, final LocalPeer localPeer,
+                                   final Set<Node> nodes, final TrackerOperation trackerOperation )
     {
         this.environmentId = environmentId;
         this.peer = peer;
+        this.localPeer = localPeer;
         this.nodes = nodes;
         this.trackerOperation = trackerOperation;
     }
@@ -49,7 +52,7 @@ public class PeerImportTemplateTask implements Callable<PrepareTemplatesResponse
                 rhTemplates.put( node.getHostId(), templates );
             }
 
-            templates.add( node.getTemplateName() );
+            templates.add( localPeer.getTemplateById( node.getTemplateName() ).getName() );
         }
 
         PrepareTemplatesResponse response =

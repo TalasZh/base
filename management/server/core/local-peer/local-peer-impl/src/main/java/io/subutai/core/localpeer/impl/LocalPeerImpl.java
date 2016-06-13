@@ -2207,6 +2207,24 @@ public class LocalPeerImpl implements LocalPeer, HostListener, Disposable
 
 
     @Override
+    public TemplateKurjun getTemplateById( final String id )
+    {
+        Preconditions.checkArgument( !Strings.isNullOrEmpty( id ) );
+
+        TemplateKurjun result = null;
+        for ( TemplateKurjun t : templateRegistry.list() )
+        {
+            if ( t.getId().equals( id ) )
+            {
+                result = t;
+                break;
+            }
+        }
+        return result;
+    }
+
+
+    @Override
     public ContainerQuota getQuota( final ContainerId containerId ) throws PeerException
     {
         Preconditions.checkNotNull( containerId );

@@ -152,6 +152,8 @@ public interface LocalPeer extends Peer
 
     List<ContainerHost> getPeerContainers( String peerId );
 
+    TemplateKurjun getTemplateById( String id );
+
     Host findHostByName( String hostname ) throws HostNotFoundException;
 
     Set<HostUtil.Task> getTasks();

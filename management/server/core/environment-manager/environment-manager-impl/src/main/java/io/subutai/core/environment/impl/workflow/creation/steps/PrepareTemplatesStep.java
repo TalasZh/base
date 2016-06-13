@@ -54,8 +54,8 @@ public class PrepareTemplatesStep
             Peer peer = peerManager.getPeer( peerPlacement.getKey() );
 
             templateUtil.addPeerTask( new PeerUtil.PeerTask<>( peer,
-                    new PeerImportTemplateTask( environment.getId(), peer, peerPlacement.getValue(),
-                            operationTracker ) ) );
+                    new PeerImportTemplateTask( environment.getId(), peer, peerManager.getLocalPeer(),
+                            peerPlacement.getValue(), operationTracker ) ) );
         }
 
         PeerUtil.PeerTaskResults<PrepareTemplatesResponse> templateResults = templateUtil.executeParallelFailFast();

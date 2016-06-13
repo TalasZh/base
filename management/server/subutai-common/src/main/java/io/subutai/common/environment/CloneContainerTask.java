@@ -75,8 +75,9 @@ public class CloneContainerTask extends HostUtil.Task<String>
     public String call() throws Exception
     {
         String containerId = resourceHost
-                .cloneContainer( request.getTemplateName(), request.getHostname(), request.getIp(),
-                        networkResource.getVlan(), networkResource.getEnvironmentId() );
+                .cloneContainer( localPeer.getTemplateById( request.getTemplateName() ).getName(),
+                        request.getHostname(), request.getIp(), networkResource.getVlan(),
+                        networkResource.getEnvironmentId() );
 
         //wait for container connection
         boolean connected = false;
