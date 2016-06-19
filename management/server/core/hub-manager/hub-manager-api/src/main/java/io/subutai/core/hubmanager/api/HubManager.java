@@ -35,6 +35,8 @@ public interface HubManager
 
     Config getHubConfiguration();
 
+    String getActiveUserEmail();
+
     String getChecksum();
 
     void sendSystemConfiguration( SystemConfDto dto );

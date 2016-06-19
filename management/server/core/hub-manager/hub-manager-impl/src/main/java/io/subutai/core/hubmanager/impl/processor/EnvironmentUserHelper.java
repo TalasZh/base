@@ -31,8 +31,8 @@ public class EnvironmentUserHelper
     private final HubRestClient restClient;
 
 
-    public EnvironmentUserHelper( IdentityManager identityManager, ConfigDataService configDataService, EnvironmentManager environmentManager,
-                                  HubRestClient restClient )
+    public EnvironmentUserHelper( IdentityManager identityManager, ConfigDataService configDataService,
+                                  EnvironmentManager environmentManager, HubRestClient restClient )
     {
         this.identityManager = identityManager;
 
@@ -48,14 +48,17 @@ public class EnvironmentUserHelper
     {
         String envOwnerId = peerDto.getOwnerId();
 
-        User user = getUserByHubId( envOwnerId );
+        UserDto userDto = getUserDataFromHub( envOwnerId );
+
+        User user = getUserByEmail( userDto.getEmail() );
 
         if ( user == null )
         {
             return;
         }
 
-        log.debug( "Deleting environment owner: id={}, name={}, email={}", user.getId(), user.getUserName(), user.getEmail() );
+        log.debug( "Deleting environment owner: id={}, name={}, email={}", user.getId(), user.getUserName(),
+                user.getEmail() );
 
         boolean hasLocalEnvironments = environmentManager.getEnvironmentsByOwnerId( user.getId() ).size() > 0;
 
@@ -102,7 +105,9 @@ public class EnvironmentUserHelper
 
         Config config = configDataService.getHubConfig( peerDto.getPeerId() );
 
-        User user = getUserByHubId( envOwnerId );
+        UserDto userDto = getUserDataFromHub( envOwnerId );
+
+        User user = getUserByEmail( userDto.getEmail() );
 
         if ( user != null )
         {
@@ -117,18 +122,17 @@ public class EnvironmentUserHelper
             return identityManager.getActiveUser();
         }
 
-        UserDto userDto = getUserDataFromHub( envOwnerId );
 
         return createUser( userDto );
     }
 
 
-    private User getUserByHubId( String userId )
+    private User getUserByEmail( String email )
     {
         for ( User user : identityManager.getAllUsers() )
         {
             // Email contains the user id in Hub
-            if ( user.getEmail().startsWith( userId ) )
+            if ( user.getEmail().startsWith( email ) )
             {
                 return user;
             }
@@ -156,13 +160,11 @@ public class EnvironmentUserHelper
     {
         log.info( "Creating new user: {}", userDto.getEmail() );
 
-        // Trick to get later the user id in Hub
-        String email = userDto.getId() + "@hub.subut.ai";
-
         try
         {
-            User user = identityManager.createUser( userDto.getFingerprint(), null, "[Hub] " + userDto.getName(), email,
-                    UserType.Regular.getId(), KeyTrustLevel.Marginal.getId(), false, true );
+            User user = identityManager
+                    .createUser( userDto.getFingerprint(), null, "[Hub] " + userDto.getName(), userDto.getEmail(),
+                            UserType.Regular.getId(), KeyTrustLevel.Marginal.getId(), false, true );
 
             identityManager.setUserPublicKey( user.getId(), userDto.getPublicKey() );
             identityManager.assignUserRole( user, getRole( "Environment-Manager" ) );

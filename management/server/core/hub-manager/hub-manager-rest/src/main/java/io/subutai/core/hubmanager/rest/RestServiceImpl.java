@@ -128,12 +128,18 @@ public class RestServiceImpl implements RestService
     public Response getRegistrationState()
     {
         RegistrationPojo pojo = new RegistrationPojo();
-
         if ( hubManager.isRegistered() )
         {
             pojo.setOwnerId( hubManager.getHubConfiguration().getOwnerId() );
 
-            pojo.setOwnerEmail( hubManager.getHubConfiguration().getOwnerEmail() );
+            if ( !hubManager.getActiveUserEmail().equals( "admin@subutai.io" ) )
+            {
+                pojo.setOwnerEmail( hubManager.getActiveUserEmail() );
+            }
+            else
+            {
+                pojo.setOwnerEmail( hubManager.getHubConfiguration().getOwnerEmail() );
+            }
         }
 
         pojo.setRegisteredToHub( hubManager.isRegistered() );
