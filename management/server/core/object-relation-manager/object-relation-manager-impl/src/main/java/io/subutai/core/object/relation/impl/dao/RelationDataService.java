@@ -2,11 +2,17 @@ package io.subutai.core.object.relation.impl.dao;
 
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.MapJoin;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -210,6 +216,40 @@ public class RelationDataService
         {
             daoManager.closeEntityManager( em );
         }
+    }
+
+
+    public List<Relation> findRelationsByTraits( Map<String, String> traits)
+    {
+        EntityManager em = daoManager.getEntityManagerFactory().createEntityManager();
+        List<Relation> result = Lists.newArrayList();
+        try
+        {
+            CriteriaBuilder cb = em.getCriteriaBuilder();
+            CriteriaQuery<RelationImpl> cq = cb.createQuery( RelationImpl.class );
+            Root<RelationImpl> root = cq.from( RelationImpl.class );
+
+            List<Predicate> predicates = Lists.newArrayList();
+
+            MapJoin<RelationImpl, String, String> relationTraits = root.joinMap( "relationTraits");
+
+            for ( final Map.Entry<String, String> entry : traits.entrySet() )
+            {
+                predicates.add( cb.equal( relationTraits.entry(), entry ) );
+            }
+
+            cq.where( predicates.toArray(new Predicate[predicates.size()]) );
+            result.addAll( em.createQuery( cq ).getResultList() );
+        }
+        catch ( Exception ex )
+        {
+            return null;
+        }
+        finally
+        {
+            daoManager.closeEntityManager( em );
+        }
+        return result;
     }
 
 

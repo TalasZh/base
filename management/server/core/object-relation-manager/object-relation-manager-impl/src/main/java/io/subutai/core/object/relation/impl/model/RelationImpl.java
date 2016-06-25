@@ -1,10 +1,15 @@
 package io.subutai.core.object.relation.impl.model;
 
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.CascadeType;
+import javax.persistence.CollectionTable;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -13,7 +18,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToOne;
+import javax.persistence.MapKeyColumn;
 import javax.persistence.Table;
 
 import io.subutai.common.security.relation.RelationLink;
@@ -43,10 +48,6 @@ public class RelationImpl implements Relation
     @ManyToOne( cascade = CascadeType.MERGE, fetch = FetchType.EAGER )
     private RelationLinkImpl trustedObject;
 
-    @Column( name = "relation_info" )
-    @OneToOne( cascade = CascadeType.ALL, fetch = FetchType.EAGER )
-    private RelationInfoImpl relationInfo;
-
     @Enumerated( EnumType.STRING )
     @Column( name = "status", nullable = false )
     private RelationStatus relationStatus;
@@ -57,9 +58,11 @@ public class RelationImpl implements Relation
     @Column( name = "signature_key_id" )
     private String keyId;
 
-    @Column( name = "link_type" )
-    @ManyToOne( fetch = FetchType.EAGER, cascade = CascadeType.ALL )
-    private LinkType linkType;
+    @ElementCollection( fetch = FetchType.EAGER )
+    @CollectionTable( name = "relation_traits" )
+    @MapKeyColumn( name = "trait_key" )
+    @Column( name = "trait_value" )
+    private Map<String, String> relationTraits = new HashMap<String, String>(); // maps from attribute name to value
 
 
     public RelationImpl()
@@ -68,12 +71,11 @@ public class RelationImpl implements Relation
 
 
     public RelationImpl( final RelationLink source, final RelationLink target, final RelationLink trustedObject,
-                         final RelationInfoImpl relationInfo, final String keyId )
+                         final String keyId )
     {
         this.source = new RelationLinkImpl( source );
         this.target = new RelationLinkImpl( target );
         this.trustedObject = new RelationLinkImpl( trustedObject );
-        this.relationInfo = relationInfo;
         this.relationStatus = RelationStatus.STATED;
         this.keyId = keyId;
     }
@@ -108,13 +110,6 @@ public class RelationImpl implements Relation
 
 
     @Override
-    public RelationInfoImpl getRelationInfo()
-    {
-        return relationInfo;
-    }
-
-
-    @Override
     public RelationStatus getRelationStatus()
     {
         return relationStatus;
@@ -127,10 +122,16 @@ public class RelationImpl implements Relation
         return keyId;
     }
 
-
-    public LinkType getLinkType()
+    @Override
+    public Map<String, String> getRelationTraits()
     {
-        return linkType;
+        return relationTraits;
+    }
+
+
+    public void setRelationTraits( final Map<String, String> relationTraits )
+    {
+        this.relationTraits = relationTraits;
     }
 
 
@@ -189,10 +190,8 @@ public class RelationImpl implements Relation
                 ", source=" + source +
                 ", target=" + target +
                 ", trustedObject=" + trustedObject +
-                ", relationInfo=" + relationInfo +
                 ", relationStatus=" + relationStatus +
                 ", keyId='" + keyId + '\'' +
-                ", linkType=" + linkType +
                 '}';
     }
 }
