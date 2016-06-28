@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import io.subutai.common.command.CommandCallback;
@@ -823,19 +824,14 @@ public class LocalPeerImpl implements LocalPeer, HostListener, Disposable
 
     protected void buildEnvContainerRelation( final ContainerHostEntity containerHost )
     {
-
-
-        containerHost.getOwnerId();
-
-        RelationInfoMeta relationInfoMeta = new RelationInfoMeta( true, true, true, true, Ownership.USER.getLevel() );
-        Map<String, String> relationTraits = relationInfoMeta.getRelationTraits();
+        Map<String, String> relationTraits = Maps.newHashMap();
         relationTraits.put( "containerLimit", "unlimited" );
         relationTraits.put( "bandwidthLimit", "unlimited" );
         relationTraits.put( "read", "true" );
         relationTraits.put( "write", "true" );
         relationTraits.put( "update", "true" );
         relationTraits.put( "delete", "true" );
-        relationTraits.put( "ownership", Ownership.USER.getName() );
+        RelationInfoMeta relationInfoMeta = new RelationInfoMeta( Ownership.USER, relationTraits );
 
         RelationLink source;
         User activeUser = identityManager.getActiveUser();
@@ -889,22 +885,8 @@ public class LocalPeerImpl implements LocalPeer, HostListener, Disposable
             }
         };
 
-        if ( source == null )
-        {
-            LOG.debug( "Source is null" );
-        }
-        if ( containerHost == null )
-        {
-            LOG.debug( "containerHost is null" );
-        }
-        if ( envLink == null )
-        {
-            LOG.debug( "envLink is null" );
-        }
-
-
-        RelationMeta relationMeta = new RelationMeta( source, envLink, containerHost, envLink.getKeyId() );
-        Relation relation = relationManager.buildRelation( relationInfoMeta, relationMeta );
+        RelationMeta relationMeta = new RelationMeta( envLink, containerHost, envLink.getKeyId() );
+        Relation relation = relationManager.buildRelation( source, relationInfoMeta, relationMeta );
         relation.setRelationStatus( RelationStatus.VERIFIED );
         relationManager.saveRelation( relation );
     }
@@ -1459,15 +1441,14 @@ public class LocalPeerImpl implements LocalPeer, HostListener, Disposable
         if ( peerOwner != null )
         {
             // Simply pass key value object as map
-            RelationInfoMeta relationInfoMeta =
-                    new RelationInfoMeta( true, true, true, true, Ownership.USER.getLevel() );
-            Map<String, String> relationTraits = relationInfoMeta.getRelationTraits();
+            Map<String, String> relationTraits = Maps.newHashMap();
             relationTraits.put( "bandwidthControl", "true" );
-            relationTraits.put( "ownership", Ownership.USER.getName() );
             relationTraits.put( "read", "true" );
             relationTraits.put( "write", "true" );
             relationTraits.put( "update", "true" );
             relationTraits.put( "delete", "true" );
+            RelationInfoMeta relationInfoMeta =
+                    new RelationInfoMeta( Ownership.USER, relationTraits );
 
             if ( Common.MANAGEMENT_HOSTNAME.equalsIgnoreCase( host.getHostname() ) )
             {
@@ -1479,8 +1460,8 @@ public class LocalPeerImpl implements LocalPeer, HostListener, Disposable
                 relationTraits.put( "containerManagement", "true" );
             }
 
-            RelationMeta relationMeta = new RelationMeta( peerOwner, peerOwner, host, peerOwner.getSecurityKeyId() );
-            Relation relation = relationManager.buildRelation( relationInfoMeta, relationMeta );
+            RelationMeta relationMeta = new RelationMeta( peerOwner, host, peerOwner.getSecurityKeyId() );
+            Relation relation = relationManager.buildRelation( peerOwner, relationInfoMeta, relationMeta );
             relation.setRelationStatus( RelationStatus.VERIFIED );
             relationManager.saveRelation( relation );
         }
@@ -1820,9 +1801,7 @@ public class LocalPeerImpl implements LocalPeer, HostListener, Disposable
         if ( peerOwner != null )
         {
             // Simply pass key value object as map
-            RelationInfoMeta relationInfoMeta =
-                    new RelationInfoMeta( true, true, true, true, Ownership.USER.getLevel() );
-            Map<String, String> relationTraits = relationInfoMeta.getRelationTraits();
+            Map<String, String> relationTraits = Maps.newHashMap();
             relationTraits.put( "hostEnvironment", "true" );
             relationTraits.put( "containerLimit", "unlimited" );
             relationTraits.put( "bandwidthLimit", "unlimited" );
@@ -1830,9 +1809,10 @@ public class LocalPeerImpl implements LocalPeer, HostListener, Disposable
             relationTraits.put( "write", "true" );
             relationTraits.put( "update", "true" );
             relationTraits.put( "delete", "true" );
+            RelationInfoMeta relationInfoMeta = new RelationInfoMeta( Ownership.USER, relationTraits );
 
-            RelationMeta relationMeta = new RelationMeta( peerOwner, this, envLink, this.getKeyId() );
-            Relation relation = relationManager.buildRelation( relationInfoMeta, relationMeta );
+            RelationMeta relationMeta = new RelationMeta( this, envLink, this.getKeyId() );
+            Relation relation = relationManager.buildRelation( peerOwner, relationInfoMeta, relationMeta );
             relation.setRelationStatus( RelationStatus.VERIFIED );
             relationManager.saveRelation( relation );
         }
@@ -1863,13 +1843,12 @@ public class LocalPeerImpl implements LocalPeer, HostListener, Disposable
             // User           - Delegated user - Environment
             // Delegated user - Delegated user - Environment
             // Delegated user - Environment    - Container
-            RelationInfoMeta relationInfoMeta = new RelationInfoMeta();
-            Map<String, String> traits = relationInfoMeta.getRelationTraits();
+            Map<String, String> traits = Maps.newHashMap();
             traits.put( "read", "true" );
             traits.put( "write", "true" );
             traits.put( "update", "true" );
             traits.put( "delete", "true" );
-            traits.put( "ownership", Ownership.USER.getName() );
+            RelationInfoMeta relationInfoMeta = new RelationInfoMeta(Ownership.USER, traits);
 
             if ( source == null )
             {
@@ -1880,8 +1859,8 @@ public class LocalPeerImpl implements LocalPeer, HostListener, Disposable
                 LOG.debug( "envLink is null" );
             }
 
-            RelationMeta relationMeta = new RelationMeta( source, source, envLink, keyId );
-            Relation relation = relationManager.buildRelation( relationInfoMeta, relationMeta );
+            RelationMeta relationMeta = new RelationMeta( source, envLink, keyId );
+            Relation relation = relationManager.buildRelation( source,  relationInfoMeta, relationMeta );
             relation.setRelationStatus( RelationStatus.VERIFIED );
             relationManager.saveRelation( relation );
         }
@@ -1920,19 +1899,18 @@ public class LocalPeerImpl implements LocalPeer, HostListener, Disposable
             RelationLink envLink = relationManager.getRelationLink( envId );
             RelationLink peerLink = relationManager.getRelationLink( ids[0] );
 
-            RelationInfoMeta relationInfoMeta =
-                    new RelationInfoMeta( true, true, true, true, Ownership.USER.getLevel() );
-            Map<String, String> relationTraits = relationInfoMeta.getRelationTraits();
+            Map<String, String> relationTraits = Maps.newHashMap();
             relationTraits.put( "encryptMessage", "true" );
             relationTraits.put( "decryptMessage", "true" );
-            relationTraits.put( "ownership", Ownership.USER.getName() );
             relationTraits.put( "read", "true" );
             relationTraits.put( "write", "true" );
             relationTraits.put( "update", "true" );
             relationTraits.put( "delete", "true" );
+            RelationInfoMeta relationInfoMeta =
+                    new RelationInfoMeta( Ownership.USER, relationTraits );
 
-            RelationMeta relationMeta = new RelationMeta( this, peerLink, envLink, this.getKeyId() );
-            Relation relation = relationManager.buildRelation( relationInfoMeta, relationMeta );
+            RelationMeta relationMeta = new RelationMeta( peerLink, envLink, this.getKeyId() );
+            Relation relation = relationManager.buildRelation( this, relationInfoMeta, relationMeta );
             relation.setRelationStatus( RelationStatus.VERIFIED );
             relationManager.saveRelation( relation );
         }

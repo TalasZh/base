@@ -53,7 +53,6 @@ import io.subutai.common.peer.EnvironmentId;
 import io.subutai.common.peer.Peer;
 import io.subutai.common.peer.PeerException;
 import io.subutai.common.peer.PeerId;
-import io.subutai.common.peer.RegistrationStatus;
 import io.subutai.common.protocol.TemplateKurjun;
 import io.subutai.common.quota.ContainerQuota;
 import io.subutai.common.security.objects.PermissionObject;
@@ -420,23 +419,23 @@ public class EnvironmentContainerImpl implements EnvironmentContainerHost, Seria
     }
 
 
+    // TODO: 6/25/16 probably now we can remove this check here, since relation checks exist in peer manager and
+    // local peer
     private void validateTrustChain() throws CommandException
     {
         if ( environmentManager != null )
         {
             logger.warn( "Trust chain validation is on..." );
-            // TODO call relationManager validation here instead
-            EnvironmentManagerImpl envImpl = environmentManager;
 
-            IdentityManager identityManager = envImpl.getIdentityManager();
-            RelationManager relationManager = envImpl.getRelationManager();
+            IdentityManager identityManager = environmentManager.getIdentityManager();
+            RelationManager relationManager = environmentManager.getRelationManager();
 
             User activeUser = identityManager.getActiveUser();
-            UserDelegate userDelegate = identityManager.getUserDelegate( activeUser );
 
             if ( activeUser != null )
             {
-                RelationMeta relationMeta = new RelationMeta( userDelegate, userDelegate, parent, parent.getId() );
+                UserDelegate userDelegate = identityManager.getUserDelegate( activeUser );
+                RelationMeta relationMeta = new RelationMeta( userDelegate, this, userDelegate.getKeyId() );
                 boolean trustedRelation =
                         relationManager.getRelationInfoManager().groupHasWritePermissions( relationMeta );
 

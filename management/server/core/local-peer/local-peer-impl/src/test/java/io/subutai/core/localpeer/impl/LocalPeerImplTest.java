@@ -50,6 +50,7 @@ import io.subutai.common.protocol.TemplateKurjun;
 import io.subutai.common.quota.ContainerQuota;
 import io.subutai.common.quota.QuotaException;
 import io.subutai.common.resource.ByteValueResource;
+import io.subutai.common.security.relation.RelationLink;
 import io.subutai.common.security.relation.RelationManager;
 import io.subutai.common.security.relation.model.Relation;
 import io.subutai.common.security.relation.model.RelationInfoMeta;
@@ -298,7 +299,7 @@ public class LocalPeerImplTest
         when( serviceLocator.getService( NetworkManager.class ) ).thenReturn( networkManager );
 
         when( identityManager.getUserByKeyId( anyString() ) ).thenReturn( user );
-        when( relationManager.buildRelation( any( RelationInfoMeta.class ), any( RelationMeta.class ) ) )
+        when( relationManager.buildRelation( any( RelationLink.class ), any( RelationInfoMeta.class ), any( RelationMeta.class ) ) )
                 .thenReturn( relation );
     }
 

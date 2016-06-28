@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import org.apache.commons.lang.time.DateUtils;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.Maps;
 
 import io.subutai.common.dao.DaoManager;
 import io.subutai.common.security.crypto.pgp.KeyPair;
@@ -1129,19 +1130,16 @@ public class IdentityManagerImpl implements IdentityManager
             }
 
             assert relationManager != null;
-            RelationInfoMeta relationInfoMeta =
-                    new RelationInfoMeta( true, true, true, true, Ownership.USER.getLevel() );
 
-            Map<String, String> traits = relationInfoMeta.getRelationTraits();
+            Map<String, String> traits = Maps.newHashMap();
             traits.put( "read", "true" );
             traits.put( "write", "true" );
             traits.put( "update", "true" );
             traits.put( "delete", "true" );
-            traits.put( "ownership", Ownership.USER.getName() );
+            RelationInfoMeta relationInfoMeta = new RelationInfoMeta( Ownership.USER, traits );
 
-            RelationMeta relationMeta =
-                    new RelationMeta( activeUser, delegatedUser, delegatedUser, activeUser.getSecurityKeyId() );
-            Relation relation = relationManager.buildRelation( relationInfoMeta, relationMeta );
+            RelationMeta relationMeta = new RelationMeta( delegatedUser, delegatedUser, activeUser.getSecurityKeyId() );
+            Relation relation = relationManager.buildRelation( activeUser, relationInfoMeta, relationMeta );
 
             String relationJson = JsonUtil.toJson( relation );
 

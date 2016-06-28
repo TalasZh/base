@@ -184,19 +184,17 @@ class SubutaiSecurityHelper
     {
         RelationMeta relationMeta = new RelationMeta();
         relationMeta.setSource( from );
-        relationMeta.setTarget( to );
-        relationMeta.setObject( templateAccess );
+        relationMeta.setTarget( templateAccess );
 
+        Map<String, String> traits = Maps.newHashMap();
+        traits.put( "read", String.valueOf( canRead ) );
+        traits.put( "write", String.valueOf( canWrite ) );
+        traits.put( "delete", String.valueOf( canDelete ) );
+        traits.put( "update", String.valueOf( canUpdate ) );
         RelationInfoMeta relationInfoMeta =
-                new RelationInfoMeta( canRead, canWrite, canUpdate, canDelete, Ownership.USER.getLevel() );
-        Map<String, String> traits = relationInfoMeta.getRelationTraits();
-        traits.put( "read", "true" );
-        traits.put( "write", "true" );
-        traits.put( "delete", "true" );
-        traits.put( "update", "true" );
-        traits.put( "ownership", Ownership.USER.getName() );
+                new RelationInfoMeta( Ownership.USER, traits );
 
-        Relation relation = relationManager.buildRelation( relationInfoMeta, relationMeta );
+        Relation relation = relationManager.buildRelation( from, relationInfoMeta, relationMeta );
         relation.setRelationStatus( RelationStatus.VERIFIED );
 
         relationManager.saveRelation( relation );
@@ -207,8 +205,7 @@ class SubutaiSecurityHelper
     {
         RelationMeta relationMeta = new RelationMeta();
         relationMeta.setSource( from );
-        relationMeta.setTarget( to );
-        relationMeta.setObject( templateAccess );
+        relationMeta.setTarget( templateAccess );
 
         Relation relation = relationManager.getRelation( relationMeta );
         if ( relation != null )
@@ -226,7 +223,7 @@ class SubutaiSecurityHelper
         List<SharedTemplateInfo> list = new ArrayList<>();
         for ( Relation relation : relationsByTarget )
         {
-            if ( TEMPLATE_ACCESS_CLASS.equals( relation.getTrustedObject().getClassPath() ) )
+            if ( TEMPLATE_ACCESS_CLASS.equals( relation.getTarget().getClassPath() ) )
             {
                 long fromUserId = subutaiIdentityManager.getUserDelegate( relation.getSource().getUniqueIdentifier() )
                                                         .getUserId();
@@ -235,7 +232,7 @@ class SubutaiSecurityHelper
                 if ( !toUserFingerprint.equals( fromUserFprint ) )
                 {
                     list.add( new SharedTemplateInfo( fromUserFprint, toUserFingerprint,
-                            relation.getTrustedObject().getUniqueIdentifier() ) );
+                            relation.getTarget().getUniqueIdentifier() ) );
                 }
             }
         }
@@ -253,8 +250,10 @@ class SubutaiSecurityHelper
         for ( Relation relation : relationsByObject )
         {
 
-            if ( TEMPLATE_ACCESS_CLASS.equals( relation.getTrustedObject().getClassPath() ) )
+            if ( TEMPLATE_ACCESS_CLASS.equals( relation.getTarget().getClassPath() ) )
             {
+                // TODO: 6/25/16 filter relevant link here (source - User shared to another user, who is in place
+                // another source in next relation)
                 long fromUserId = subutaiIdentityManager.getUserDelegate( relation.getSource().getUniqueIdentifier() )
                                                         .getUserId();
                 User fromUser = subutaiIdentityManager.getUser( fromUserId );
@@ -267,7 +266,7 @@ class SubutaiSecurityHelper
                 if ( !fromUserFprint.equals( toUserFprint ) )
                 {
                     list.add( new SharedTemplateInfo( fromUserFprint, toUserFprint,
-                            relation.getTrustedObject().getUniqueIdentifier() ) );
+                            relation.getTarget().getUniqueIdentifier() ) );
                 }
             }
         }
@@ -346,18 +345,16 @@ class SubutaiSecurityHelper
 
     private boolean check( RelationLink source, RelationLink target, Map<String, String> traits )
     {
-        RelationInfoMeta meta = new RelationInfoMeta();
-        meta.setRelationTraits( traits );
         RelationInfoManager relationInfoManager = relationManager.getRelationInfoManager();
         try
         {
             if ( source == null )
             {
-                relationInfoManager.checkRelation( target, meta, null );
+                relationInfoManager.checkRelation( target, traits, null );
             }
             else
             {
-                relationInfoManager.checkRelation( source, target, meta, null );
+                relationInfoManager.checkRelation( source, target, traits, null );
             }
         }
         catch ( RelationVerificationException e )
