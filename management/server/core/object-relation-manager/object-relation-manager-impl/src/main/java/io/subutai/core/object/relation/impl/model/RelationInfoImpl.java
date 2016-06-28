@@ -68,11 +68,7 @@ public class RelationInfoImpl implements RelationInfo
 
     public RelationInfoImpl( final RelationInfoMeta relationInfoMeta )
     {
-        this.readPermission = relationInfoMeta.isReadPermission();
-        this.writePermission = relationInfoMeta.isWritePermission();
-        this.updatePermission = relationInfoMeta.isUpdatePermission();
-        this.deletePermission = relationInfoMeta.isDeletePermission();
-        this.ownershipLevel = relationInfoMeta.getOwnershipLevel();
+        this.ownershipLevel = relationInfoMeta.getOwnership().getLevel();
         if ( relationInfoMeta.getRelationTraits() != null )
         {
             this.relationTraits.putAll( relationInfoMeta.getRelationTraits() );

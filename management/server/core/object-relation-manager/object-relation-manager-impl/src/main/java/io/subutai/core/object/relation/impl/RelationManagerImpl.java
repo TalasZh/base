@@ -91,9 +91,8 @@ public class RelationManagerImpl implements RelationManager
             }
 
             // Verification check have to be applied to verify that stored data is the same as the one being supported
-            Relation storedRelation = relationDataService
-                    .findBySourceTargetObject( relation.getSource(), relation.getTarget(),
-                            relation.getTrustedObject() );
+            Relation storedRelation = relationDataService.findBySourceTargetObject( relation.getSource(),
+                    relation.getTarget() );
 
             if ( storedRelation == null )
             {
@@ -130,11 +129,12 @@ public class RelationManagerImpl implements RelationManager
     }
 
 
+    // TODO: 6/25/16 Add as a first parameter RelationLink - issuer to check if issuer has right relation with
+    // relationMeta.source to build new relation with relationMeta.target
     @Override
-    public Relation buildRelation( final RelationInfoMeta relationInfoMeta, final RelationMeta relationMeta )
+    public Relation buildRelation( RelationLink issuer, final RelationInfoMeta relationInfoMeta, final RelationMeta relationMeta )
     {
-        RelationInfoImpl relationInfo = new RelationInfoImpl( relationInfoMeta );
-        if ( relationMeta.getSource() == null )
+        if ( issuer == null )
         {
             User activeUser = identityManager.getActiveUser();
             UserDelegate delegatedUser = null;
@@ -142,17 +142,17 @@ public class RelationManagerImpl implements RelationManager
             {
                 delegatedUser = identityManager.getUserDelegate( activeUser.getId() );
             }
-            relationMeta.setSource( delegatedUser );
+            issuer = delegatedUser;
         }
 
-        RelationImpl relation =
-                new RelationImpl( relationMeta.getSource(), relationMeta.getTarget(), relationMeta.getObject(),
-                        relationInfo, relationMeta.getKeyId() );
+        // TODO: 6/25/16 perform check for permissions to build new relation
+
+        RelationImpl relation = new RelationImpl( relationMeta.getSource(), relationMeta.getTarget(),
+                relationInfoMeta.getOwnership(), relationInfoMeta.getRelationTraits(), relationMeta.getKeyId() );
 
         saveRelation( relation );
 
-        return relationDataService.findBySourceTargetObject( relationMeta.getSource(), relationMeta.getTarget(),
-                relationMeta.getObject() );
+        return relationDataService.findBySourceTargetObject( relationMeta.getSource(), relationMeta.getTarget() );
     }
 
 
@@ -179,25 +179,9 @@ public class RelationManagerImpl implements RelationManager
 
 
     @Override
-    public Relation buildTrustRelation( final RelationInfo relationInfo, final RelationMeta relationMeta )
-    {
-        //TODO try to pass interface as is
-        RelationImpl relation =
-                new RelationImpl( relationMeta.getSource(), relationMeta.getTarget(), relationMeta.getObject(),
-                        ( RelationInfoImpl ) relationInfo, relationMeta.getKeyId() );
-
-        saveRelation( relation );
-
-        return relationDataService.findBySourceTargetObject( relationMeta.getSource(), relationMeta.getTarget(),
-                relationMeta.getObject() );
-    }
-
-
-    @Override
     public Relation getRelation( final RelationMeta relationMeta )
     {
-        return relationDataService.findBySourceTargetObject( relationMeta.getSource(), relationMeta.getTarget(),
-                relationMeta.getObject() );
+        return relationDataService.findBySourceTargetObject( relationMeta.getSource(), relationMeta.getTarget() );
     }
 
 
@@ -206,8 +190,7 @@ public class RelationManagerImpl implements RelationManager
     {
         //TODO check if relation valid otherwise break relation build
 
-        relationDataService.updateBatch( Sets.<Object>newHashSet( relation.getSource(), relation.getTarget(),
-                relation.getTrustedObject() ) );
+        relationDataService.updateBatch( Sets.<Object>newHashSet( relation.getSource(), relation.getTarget() ) );
         relationDataService.update( relation );
     }
 
@@ -257,9 +240,8 @@ public class RelationManagerImpl implements RelationManager
     @Override
     public void removeRelation( final RelationMeta relationMeta )
     {
-        Relation relation = relationDataService
-                .findBySourceTargetObject( relationMeta.getSource(), relationMeta.getTarget(),
-                        relationMeta.getObject() );
+        Relation relation = relationDataService.findBySourceTargetObject( relationMeta.getSource(),
+                relationMeta.getTarget() );
         removeRelation( relation.getId() );
     }
 

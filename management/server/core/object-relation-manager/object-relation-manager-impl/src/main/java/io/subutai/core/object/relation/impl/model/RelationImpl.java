@@ -21,6 +21,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.MapKeyColumn;
 import javax.persistence.Table;
 
+import io.subutai.common.security.objects.Ownership;
 import io.subutai.common.security.relation.RelationLink;
 import io.subutai.common.security.relation.model.Relation;
 import io.subutai.common.security.relation.model.RelationStatus;
@@ -44,13 +45,12 @@ public class RelationImpl implements Relation
     @ManyToOne( cascade = CascadeType.MERGE, fetch = FetchType.EAGER )
     private RelationLinkImpl target;
 
-    @Column( name = "trusted_object_link" )
-    @ManyToOne( cascade = CascadeType.MERGE, fetch = FetchType.EAGER )
-    private RelationLinkImpl trustedObject;
-
     @Enumerated( EnumType.STRING )
     @Column( name = "status", nullable = false )
     private RelationStatus relationStatus;
+
+    @Column( name = "ownership_level" )
+    private int ownershipLevel = Ownership.ALL.getLevel();
 
     /**
      * Public key id to verify signed message
@@ -70,14 +70,18 @@ public class RelationImpl implements Relation
     }
 
 
-    public RelationImpl( final RelationLink source, final RelationLink target, final RelationLink trustedObject,
-                         final String keyId )
+    public RelationImpl( final RelationLink source, final RelationLink target, Ownership ownership,
+                         final Map<String, String> traits, final String keyId )
     {
         this.source = new RelationLinkImpl( source );
         this.target = new RelationLinkImpl( target );
-        this.trustedObject = new RelationLinkImpl( trustedObject );
         this.relationStatus = RelationStatus.STATED;
         this.keyId = keyId;
+        this.ownershipLevel = ownership.getLevel();
+        if ( traits != null )
+        {
+            this.relationTraits.putAll( traits );
+        }
     }
 
 
@@ -103,13 +107,6 @@ public class RelationImpl implements Relation
 
 
     @Override
-    public RelationLinkImpl getTrustedObject()
-    {
-        return trustedObject;
-    }
-
-
-    @Override
     public RelationStatus getRelationStatus()
     {
         return relationStatus;
@@ -122,10 +119,18 @@ public class RelationImpl implements Relation
         return keyId;
     }
 
+
     @Override
     public Map<String, String> getRelationTraits()
     {
         return relationTraits;
+    }
+
+
+    @Override
+    public int getOwnershipLevel()
+    {
+        return ownershipLevel;
     }
 
 
@@ -163,10 +168,6 @@ public class RelationImpl implements Relation
         {
             return false;
         }
-        if ( trustedObject != null ? !trustedObject.equals( relation.trustedObject ) : relation.trustedObject != null )
-        {
-            return false;
-        }
         return !( keyId != null ? !keyId.equals( relation.keyId ) : relation.keyId != null );
     }
 
@@ -176,7 +177,6 @@ public class RelationImpl implements Relation
     {
         int result = source != null ? source.hashCode() : 0;
         result = 31 * result + ( target != null ? target.hashCode() : 0 );
-        result = 31 * result + ( trustedObject != null ? trustedObject.hashCode() : 0 );
         result = 31 * result + ( keyId != null ? keyId.hashCode() : 0 );
         return result;
     }
@@ -189,7 +189,6 @@ public class RelationImpl implements Relation
                 "id=" + id +
                 ", source=" + source +
                 ", target=" + target +
-                ", trustedObject=" + trustedObject +
                 ", relationStatus=" + relationStatus +
                 ", keyId='" + keyId + '\'' +
                 '}';

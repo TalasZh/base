@@ -10,6 +10,7 @@ import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Expression;
 import javax.persistence.criteria.MapJoin;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
@@ -18,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 import io.subutai.common.dao.DaoManager;
 import io.subutai.common.security.objects.Ownership;
@@ -219,25 +221,26 @@ public class RelationDataService
     }
 
 
-    public List<Relation> findRelationsByTraits( Map<String, String> traits)
+    public Set<Relation> findRelationsByTraits( Map<String, String> traits, int ownershipLevel)
     {
         EntityManager em = daoManager.getEntityManagerFactory().createEntityManager();
-        List<Relation> result = Lists.newArrayList();
+        Set<Relation> result = Sets.newHashSet();
         try
         {
             CriteriaBuilder cb = em.getCriteriaBuilder();
             CriteriaQuery<RelationImpl> cq = cb.createQuery( RelationImpl.class );
             Root<RelationImpl> root = cq.from( RelationImpl.class );
 
-            List<Predicate> predicates = Lists.newArrayList();
+            Set<Predicate> predicates = Sets.newHashSet();
 
             MapJoin<RelationImpl, String, String> relationTraits = root.joinMap( "relationTraits");
+            Expression<Integer> ownership = root.get( "ownershipLevel" );
 
             for ( final Map.Entry<String, String> entry : traits.entrySet() )
             {
                 predicates.add( cb.equal( relationTraits.entry(), entry ) );
             }
-
+            predicates.add( cb.le( ownership, ownershipLevel ) );
             cq.where( predicates.toArray(new Predicate[predicates.size()]) );
             result.addAll( em.createQuery( cq ).getResultList() );
         }
@@ -397,8 +400,7 @@ public class RelationDataService
     }
 
 
-    public Relation findBySourceTargetObject( final RelationLink source, final RelationLink target,
-                                              final RelationLink object )
+    public Relation findBySourceTargetObject( final RelationLink source, final RelationLink target )
     {
         EntityManager em = daoManager.getEntityManagerFactory().createEntityManager();
         Relation result = null;
@@ -406,11 +408,9 @@ public class RelationDataService
         {
             Query qr = em.createQuery( "select ss from RelationImpl AS ss"
                     + " WHERE ss.source.uniqueIdentifier=:source"
-                    + " AND ss.target.uniqueIdentifier=:target"
-                    + " AND ss.trustedObject.uniqueIdentifier=:trustedObject" );
+                    + " AND ss.target.uniqueIdentifier=:target" );
             qr.setParameter( "source", source.getUniqueIdentifier() );
             qr.setParameter( "target", target.getUniqueIdentifier() );
-            qr.setParameter( "trustedObject", object.getUniqueIdentifier() );
             List<Relation> list = qr.getResultList();
 
             if ( list.size() > 0 )
