@@ -12,7 +12,6 @@ import org.apache.karaf.shell.commands.Command;
 
 import io.subutai.common.security.relation.RelationManager;
 import io.subutai.common.security.relation.model.Relation;
-import io.subutai.common.security.relation.model.RelationInfo;
 import io.subutai.core.identity.rbac.cli.SubutaiShellCommandSupport;
 
 
@@ -40,14 +39,12 @@ public class TestRoleValidation extends SubutaiShellCommandSupport
             for ( final Relation relation : relationList )
             {
                 System.out.println( String.format( "%s %s", relation.getId(), relation.getRelationStatus() ) );
-                RelationInfo relationInfo = relation.getRelationInfo();
-                for ( final Map.Entry<String, String> entry : relationInfo.getRelationTraits().entrySet() )
+                for ( final Map.Entry<String, String> entry : relation.getRelationTraits().entrySet() )
                 {
                     String keyValue = String.format( "\t%-24s => %s", entry.getKey(), entry.getValue() );
                     System.out.println( keyValue );
                 }
-                String links = String.format( "\t%s, %s, %s", relation.getSource().getLinkId(), relation.getTarget().getLinkId(),
-                        relation.getTrustedObject().getLinkId() );
+                String links = String.format( "\t%s, %s, %s", relation.getSource().getLinkId(), relation.getTarget().getLinkId() );
                 System.out.println( links );
             }
             System.out.println();

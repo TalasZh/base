@@ -45,7 +45,6 @@ import io.subutai.common.security.relation.RelationLink;
 import io.subutai.common.security.relation.RelationManager;
 import io.subutai.common.security.relation.RelationVerificationException;
 import io.subutai.common.security.relation.model.Relation;
-import io.subutai.common.security.relation.model.RelationInfo;
 import io.subutai.common.security.relation.model.RelationInfoMeta;
 import io.subutai.common.security.relation.model.RelationMeta;
 import io.subutai.common.security.relation.model.RelationStatus;
@@ -144,16 +143,14 @@ public class EnvironmentManagerSecureProxy
     private void check( RelationLink source, RelationLink target, Map<String, String> traits )
             throws RelationVerificationException
     {
-        RelationInfoMeta meta = new RelationInfoMeta();
-        meta.setRelationTraits( traits );
         RelationInfoManager relationInfoManager = relationManager.getRelationInfoManager();
         if ( source == null )
         {
-            relationInfoManager.checkRelation( target, meta, null );
+            relationInfoManager.checkRelation( target, traits, null );
         }
         else
         {
-            relationInfoManager.checkRelation( source, target, meta, null );
+            relationInfoManager.checkRelation( source, target, traits, null );
         }
     }
 
@@ -694,11 +691,12 @@ public class EnvironmentManagerSecureProxy
             ShareDto shareDto = new ShareDto();
             shareDto.setId( delegatedUser.getUserId() );
 
-            RelationInfo relationInfo = relation.getRelationInfo();
-            shareDto.setRead( relationInfo.isReadPermission() );
-            shareDto.setDelete( relationInfo.isDeletePermission() );
-            shareDto.setUpdate( relationInfo.isUpdatePermission() );
-            shareDto.setWrite( relationInfo.isWritePermission() );
+            Map<String, String> traits = relation.getRelationTraits();
+
+            shareDto.setRead( Boolean.valueOf( traits.get( "read" ) ) );
+            shareDto.setDelete( Boolean.valueOf( traits.get( "delete" ) ) );
+            shareDto.setUpdate( Boolean.valueOf( traits.get( "update" ) ) );
+            shareDto.setWrite( Boolean.valueOf( traits.get( "write" ) ) );
 
             sharedUsers.add( shareDto );
         }
@@ -733,20 +731,16 @@ public class EnvironmentManagerSecureProxy
                 User targetUser = identityManager.getUser( dto.getId() );
                 UserDelegate targetDelegate = identityManager.getUserDelegate( targetUser.getId() );
 
-                RelationInfoMeta relationInfoMeta =
-                        new RelationInfoMeta( dto.isRead(), dto.isWrite(), dto.isUpdate(), dto.isDelete(),
-                                Ownership.GROUP.getLevel() );
-                Map<String, String> traits = relationInfoMeta.getRelationTraits();
+                Map<String, String> traits = Maps.newHashMap();
                 traits.put( "read", String.valueOf( dto.isRead() ) );
                 traits.put( "write", String.valueOf( dto.isWrite() ) );
                 traits.put( "update", String.valueOf( dto.isUpdate() ) );
                 traits.put( "delete", String.valueOf( dto.isDelete() ) );
-                traits.put( "ownership", Ownership.GROUP.getName() );
+                RelationInfoMeta relationInfoMeta = new RelationInfoMeta( Ownership.GROUP, traits );
 
-                RelationMeta relationMeta =
-                        new RelationMeta( delegatedUser, targetDelegate, environment, delegatedUser.getId() );
+                RelationMeta relationMeta = new RelationMeta( targetDelegate, environment, delegatedUser.getId() );
 
-                Relation relation = relationManager.buildRelation( relationInfoMeta, relationMeta );
+                Relation relation = relationManager.buildRelation( delegatedUser, relationInfoMeta, relationMeta );
                 relation.setRelationStatus( RelationStatus.VERIFIED );
                 relationManager.saveRelation( relation );
             }

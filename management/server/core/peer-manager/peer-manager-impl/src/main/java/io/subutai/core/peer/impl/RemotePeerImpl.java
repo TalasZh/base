@@ -147,13 +147,12 @@ public class RemotePeerImpl implements RemotePeer
     {
         RelationInfoManager relationInfoManager = relationManager.getRelationInfoManager();
 
-        RelationInfoMeta relationInfoMeta = new RelationInfoMeta();
-        Map<String, String> traits = relationInfoMeta.getRelationTraits();
+        Map<String, String> traits = Maps.newHashMap();
         traits.put( "receiveHeartbeats", "allow" );
         traits.put( "sendHeartbeats", "allow" );
         traits.put( "hostTemplates", "allow" );
 
-        relationInfoManager.checkRelation( peerManager.getLocalPeer(), this, relationInfoMeta, null );
+        relationInfoManager.checkRelation( peerManager.getLocalPeer(), this, traits, null );
     }
 
 
@@ -614,15 +613,14 @@ public class RemotePeerImpl implements RemotePeer
     protected void buildEnvContainerRelation( final CloneResponse cloneResponse, final String environmentId )
     {
 
-        RelationInfoMeta relationInfoMeta = new RelationInfoMeta( true, true, true, true, Ownership.USER.getLevel() );
-        Map<String, String> relationTraits = relationInfoMeta.getRelationTraits();
+        Map<String, String> relationTraits = Maps.newHashMap();
         relationTraits.put( "containerLimit", "unlimited" );
         relationTraits.put( "bandwidthLimit", "unlimited" );
         relationTraits.put( "read", "true" );
         relationTraits.put( "write", "true" );
         relationTraits.put( "update", "true" );
         relationTraits.put( "delete", "true" );
-        relationTraits.put( "ownership", Ownership.USER.getName() );
+        RelationInfoMeta relationInfoMeta = new RelationInfoMeta( Ownership.USER, relationTraits );
 
         RelationLink source;
         User activeUser = identityManager.getActiveUser();
@@ -716,8 +714,8 @@ public class RemotePeerImpl implements RemotePeer
             }
         };
 
-        RelationMeta relationMeta = new RelationMeta( source, envLink, containerLink, envLink.getKeyId() );
-        Relation relation = relationManager.buildRelation( relationInfoMeta, relationMeta );
+        RelationMeta relationMeta = new RelationMeta( envLink, containerLink, envLink.getKeyId() );
+        Relation relation = relationManager.buildRelation( source, relationInfoMeta, relationMeta );
         relation.setRelationStatus( RelationStatus.VERIFIED );
         relationManager.saveRelation( relation );
     }

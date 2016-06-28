@@ -394,8 +394,8 @@ public class PeerManagerImpl implements PeerManager
             traits.put( "hostTemplates", "allow" );
 
             User peerOwner = identityManager.getUserByKeyId( identityManager.getPeerOwnerId() );
-            RelationMeta relationMeta = new RelationMeta( peerOwner, localPeer, remotePeer, localPeer.getKeyId() );
-            Relation relation = relationManager.buildRelation( relationInfoMeta, relationMeta );
+            RelationMeta relationMeta = new RelationMeta( localPeer, remotePeer, localPeer.getKeyId() );
+            Relation relation = relationManager.buildRelation( peerOwner, relationInfoMeta, relationMeta );
             relation.setRelationStatus( RelationStatus.VERIFIED );
             relationManager.saveRelation( relation );
 
@@ -433,7 +433,7 @@ public class PeerManagerImpl implements PeerManager
 
         User peerOwner = identityManager.getUserByKeyId( identityManager.getPeerOwnerId() );
         Peer remotePeer = getPeer( registrationData.getPeerInfo().getId() );
-        RelationMeta relationMeta = new RelationMeta( peerOwner, localPeer, remotePeer, localPeer.getKeyId() );
+        RelationMeta relationMeta = new RelationMeta( localPeer, remotePeer, localPeer.getKeyId() );
         relationManager.removeRelation( relationMeta );
 
         removePeerData( registrationData.getPeerInfo().getId() );
