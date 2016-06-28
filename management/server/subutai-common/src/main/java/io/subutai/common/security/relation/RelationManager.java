@@ -31,14 +31,6 @@ public interface RelationManager
     @Deprecated
     RelationInfo createTrustRelationship( RelationInfoMeta relationInfoMeta );
 
-    /**
-     * Method for building trust relation between objects
-     *
-     * @deprecated use {@link #buildRelation(RelationInfoMeta, RelationMeta)} ()} instead.
-     */
-    @Deprecated
-    Relation buildTrustRelation( RelationInfo relationInfo, RelationMeta relationMeta );
-
     String getContext();
 
     /**
@@ -47,7 +39,7 @@ public interface RelationManager
      */
     String getRelationChallenge( long ttl ) throws RelationVerificationException;
 
-    Relation buildRelation( RelationInfoMeta relationInfoMeta, RelationMeta relationMeta );
+    Relation buildRelation( RelationLink issuer, RelationInfoMeta relationInfoMeta, RelationMeta relationMeta );
 
     Relation getRelation( RelationMeta relationMeta );
 

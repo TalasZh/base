@@ -10,17 +10,8 @@ import io.subutai.common.security.objects.Ownership;
 
 public class RelationInfoMeta
 {
-    //read, write, delete, update
-    private boolean readPermission;
-
-    private boolean writePermission;
-
-    private boolean updatePermission;
-
-    private boolean deletePermission;
-
     //Permission, role
-    private int ownershipLevel = Ownership.ALL.getLevel();
+    private Ownership ownership = Ownership.ALL;
 
     private Map<String, String> relationTraits = Maps.newHashMap();
 
@@ -30,14 +21,10 @@ public class RelationInfoMeta
     }
 
 
-    public RelationInfoMeta( final boolean readPermission, final boolean writePermission,
-                             final boolean updatePermission, final boolean deletePermission, final int ownershipLevel )
+    public RelationInfoMeta( final Ownership ownership, Map<String, String> traits )
     {
-        this.readPermission = readPermission;
-        this.writePermission = writePermission;
-        this.updatePermission = updatePermission;
-        this.deletePermission = deletePermission;
-        this.ownershipLevel = ownershipLevel;
+        this.ownership = ownership;
+        this.relationTraits = traits;
     }
 
 
@@ -53,62 +40,14 @@ public class RelationInfoMeta
     }
 
 
-    public boolean isReadPermission()
+    public Ownership getOwnership()
     {
-        return readPermission;
+        return ownership;
     }
 
 
-    public void setReadPermission( final boolean readPermission )
+    public void setOwnership( final Ownership ownership )
     {
-        this.readPermission = readPermission;
-    }
-
-
-    public boolean isWritePermission()
-    {
-        return writePermission;
-    }
-
-
-    public void setWritePermission( final boolean writePermission )
-    {
-        this.writePermission = writePermission;
-    }
-
-
-    public boolean isUpdatePermission()
-    {
-        return updatePermission;
-    }
-
-
-    public void setUpdatePermission( final boolean updatePermission )
-    {
-        this.updatePermission = updatePermission;
-    }
-
-
-    public boolean isDeletePermission()
-    {
-        return deletePermission;
-    }
-
-
-    public void setDeletePermission( final boolean deletePermission )
-    {
-        this.deletePermission = deletePermission;
-    }
-
-
-    public int getOwnershipLevel()
-    {
-        return ownershipLevel;
-    }
-
-
-    public void setOwnershipLevel( final int ownershipLevel )
-    {
-        this.ownershipLevel = ownershipLevel;
+        this.ownership = ownership;
     }
 }

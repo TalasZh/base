@@ -2,6 +2,7 @@ package io.subutai.common.security.relation.model;
 
 
 import java.io.Serializable;
+import java.util.Map;
 
 import io.subutai.common.security.relation.RelationLink;
 
@@ -14,9 +15,9 @@ public interface Relation extends Serializable
 
     RelationLink getTarget();
 
-    RelationLink getTrustedObject();
+    Map<String, String> getRelationTraits();
 
-    RelationInfo getRelationInfo();
+    int getOwnershipLevel();
 
     RelationStatus getRelationStatus();
 

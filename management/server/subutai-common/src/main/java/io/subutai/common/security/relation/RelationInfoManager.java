@@ -1,6 +1,8 @@
 package io.subutai.common.security.relation;
 
 
+import java.util.Map;
+
 import io.subutai.common.security.relation.model.RelationInfoMeta;
 import io.subutai.common.security.relation.model.RelationMeta;
 
@@ -12,11 +14,11 @@ import io.subutai.common.security.relation.model.RelationMeta;
 public interface RelationInfoManager
 {
     void checkRelation( final RelationLink targetObject,
-                                final RelationInfoMeta relationInfoMeta, final String encodedToken )
+                                final Map<String, String> traits, final String encodedToken )
             throws RelationVerificationException;
 
-    void checkRelation( final RelationLink source, final RelationLink targetObject,
-                        final RelationInfoMeta relationInfoMeta, final String encodedToken )
+    void checkRelation( final RelationLink source, final RelationLink targetObject, final Map<String, String> traits,
+                             final String encodedToken )
             throws RelationVerificationException;
 
     /**

@@ -10,8 +10,6 @@ public class RelationMeta
 
     private RelationLink target;
 
-    private RelationLink object;
-
     // Key id to verify relation
     private String keyId;
 
@@ -21,20 +19,11 @@ public class RelationMeta
     }
 
 
-    public RelationMeta( final RelationLink source, final RelationLink target, final RelationLink object,
+    public RelationMeta( final RelationLink source, final RelationLink target,
                          final String keyId )
     {
         this.source = source;
         this.target = target;
-        this.object = object;
-        this.keyId = keyId;
-    }
-
-
-    public RelationMeta( final RelationLink target, final RelationLink object, final String keyId )
-    {
-        this.target = target;
-        this.object = object;
         this.keyId = keyId;
     }
 
@@ -60,18 +49,6 @@ public class RelationMeta
     public void setTarget( final RelationLink target )
     {
         this.target = target;
-    }
-
-
-    public RelationLink getObject()
-    {
-        return object;
-    }
-
-
-    public void setObject( final RelationLink object )
-    {
-        this.object = object;
     }
 
 
